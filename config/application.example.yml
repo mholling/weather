@@ -1,0 +1,6 @@
+common:
+  one_wire:
+    host: localhost
+    port: 4304
+    units: celsius
+  time_zone: Canberra

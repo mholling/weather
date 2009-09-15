@@ -1,0 +1,15 @@
+log/*
+tmp/*
+.DS_Store
+coverage/*
+config/database.yml
+config/application.yml
+# db/seeds.rb
+public/cache
+*.html
+# public/*/*.html
+# public/**/*.html
+!public/404.html
+!public/422.html
+!public/500.html
+public/stylesheets/*.css
