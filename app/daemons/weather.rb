@@ -2,7 +2,7 @@
 require 'rubygems'
 require 'daemons'
 
-Daemons.run_proc('weather.rb', :dir_mode => :system, :multiple => false) do
+Daemons.run_proc('weather.rb', :dir_mode => :system, :multiple => false, :backtrace => true) do
   ENV["RAILS_ENV"] = ARGV.grep(/development|production/).first || "production"
 
   require File.expand_path(File.dirname(__FILE__) + "/../../config/environment")

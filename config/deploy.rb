@@ -1,5 +1,5 @@
 set :application, "weather"
-set :domain, "squeeze"
+set :domain, "matthew@squeeze"
 set :deploy_to, "/var/www/weather"
 set :repository, "git://github.com/mholling/weather.git"
 set :revision, "master"
@@ -47,6 +47,7 @@ production:
   remote_task :symlink do
     run "ln -nfs #{shared_path}/config/database.yml #{current_path}/config/database.yml"
     run "ln -nfs #{current_path}/public #{current_path}/public/add_expires_header"
+    run "ln -nfs #{current_path}/app/daemons/weather.rb /etc/init.d/weather.rb"
   end
  
   desc "Create database.yml in shared directory."
