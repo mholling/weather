@@ -16,8 +16,10 @@ require 'daemons'
 Daemons.run_proc('weather.rb', :dir_mode => :system, :multiple => false, :backtrace => true) do
   ENV["RAILS_ENV"] = ARGV.grep(/development|production/).first || "production"
 
-  THIS_FILE = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
-  require File.expand_path(File.dirname(THIS_FILE) + "/../../config/environment")
+  file = __FILE__
+  while File.symlink?(file) do file = File.readlink(file) end
+  require File.expand_path(File.dirname(file) + "/../../config/environment")
+  
   Rails.logger.auto_flushing = 1 if Rails.env.development?
     
   Signal.trap("TERM") do
