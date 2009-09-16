@@ -43,11 +43,10 @@ production:
     end
   end
   
-  desc "Symlink shared cache and photo assets directories and database.yml file."
+  desc "Symlink database.yml file."
   remote_task :symlink do
     run "ln -nfs #{shared_path}/config/database.yml #{current_path}/config/database.yml"
-    run "ln -nfs #{current_path}/public #{current_path}/public/add_expires_header"
-    run "ln -nfs #{current_path}/app/daemons/weather.rb /etc/init.d/weather.rb"
+    # run "ln -nfs #{current_path}/public #{current_path}/public/add_expires_header"
   end
  
   desc "Create database.yml in shared directory."
