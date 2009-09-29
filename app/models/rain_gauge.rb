@@ -71,6 +71,8 @@ class RainGauge < Instrument
     number, digest = string.unpack("LA16x12")
     raise NoOldCountError if digest != Digest::MD5.digest([ number ].pack("L"))
     number
+  rescue ArgumentError
+    raise NoOldCountError
   end
   
 end

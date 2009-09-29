@@ -63,6 +63,7 @@ class Instrument < ActiveRecord::Base
           sleep 1
         end
         instruments.first.observe!
+        # TODO: touch a file to indicate alive to monit?
       end
     rescue TerminateException
       Rails.logger.info "#{Time.now} Stopping observations."
