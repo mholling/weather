@@ -1,5 +1,6 @@
 class RestartObserver < ActiveRecord::Observer
   observe :device, :instrument, :chart
+  # TODO: does this need to be observing charts? NO!
   
   def after_save(object)
     if APP_CONFIG.has_key?("restart_observations")

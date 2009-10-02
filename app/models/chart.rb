@@ -9,6 +9,8 @@ class Chart < ActiveRecord::Base
   
   validates_size_of :instruments, :minimum => 1
   
+  serialize :config, Hash
+  
   def after_initialize
     self.config ||= {}
   end

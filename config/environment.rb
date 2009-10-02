@@ -7,7 +7,7 @@ RAILS_GEM_VERSION = '2.3.4' unless defined? RAILS_GEM_VERSION
 require File.join(File.dirname(__FILE__), 'boot')
 
 app_config = YAML.load_file(Rails.root.join("config", "application.yml"))
-require 'lib/hash'
+require File.join(Rails.root, 'lib/hash')
 APP_CONFIG = app_config["common"].deep_merge(app_config[RAILS_ENV] || {})
 
 Rails::Initializer.run do |config|

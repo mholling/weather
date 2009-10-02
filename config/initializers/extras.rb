@@ -1,3 +1,3 @@
-require 'lib/hash'
-require 'lib/range'
-require 'lib/time'
+require File.join(Rails.root, 'lib/hash')
+require File.join(Rails.root, 'lib/range')
+require File.join(Rails.root, 'lib/time')

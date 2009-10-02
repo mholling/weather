@@ -12,4 +12,6 @@ public/cache
 !public/404.html
 !public/422.html
 !public/500.html
-public/stylesheets/*.css
+# public/stylesheets/*.css
+# !public/stylesheets/jquery-ui-1.7.2.custom.css
+# !public/stylesheets/jquery.jqplot.min.css

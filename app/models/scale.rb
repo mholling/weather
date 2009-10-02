@@ -2,6 +2,8 @@ class Scale < ActiveRecord::Base
   has_many :scalings, :dependent => :destroy
   has_many :charts, :through => :scalings
   
+  # TODO: add :interval column instead of having it in the config...
+  
   serialize :config, Hash
   
   def after_initialize
