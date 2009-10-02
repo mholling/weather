@@ -2,7 +2,11 @@ class Instrument < ActiveRecord::Base
   class TerminateException < Exception; end
   has_many :components
   has_many :devices, :through => :components
+  has_one :device, :through => :components
   has_many :observations
+  has_many :chartings
+  has_many :charts, :through => :chartings
+  
   
   validates_associated :devices
   
@@ -12,7 +16,7 @@ class Instrument < ActiveRecord::Base
     
   def after_initialize
     self.config ||= {}
-    self.time = Time.now
+    self.time = Time.zone.now
     self.interval = default_interval
   end
   
@@ -23,24 +27,22 @@ class Instrument < ActiveRecord::Base
   end
   
   def due?
-    time <= Time.now
+    time <= Time.zone.now
   end
   
   def observe!
-    sleep [ time - Time.now, 0 ].max
+    sleep [ time - Time.zone.now, 0 ].max
     if value = self.read!
       observations.create(:value => value)
-      Rails.logger.info("#{Time.now} #{description.humanize} observed #{value}")
+      Rails.logger.info("#{Time.zone.now} #{description.humanize} observed #{value}")
     end
   rescue SystemCallError => e
-    Rails.logger.error("#{Time.now} Problem reading #{description.downcase}: #{e.message.downcase}")
+    Rails.logger.error("#{Time.zone.now} Problem reading #{description.downcase}: #{e.message.downcase}")
   ensure
-    while time < Time.now
+    while time < Time.zone.now
       self.time += interval
     end
   end
-  
-  private
   
   def description
     "#{self.class.name.underscore.humanize} (#{name.blank? ? id : name})"
@@ -50,12 +52,14 @@ class Instrument < ActiveRecord::Base
     config['interval'] || 60
   end
   
+  private
+  
   attr_writer :time
   attr_accessor :interval
       
   class << self    
     def observe!
-      Rails.logger.info "#{Time.now} Starting observations."
+      Rails.logger.info "#{Time.zone.now} Starting observations."
       instruments = active.all(:include => :devices)
       while true do
         instruments.sort!
@@ -66,7 +70,7 @@ class Instrument < ActiveRecord::Base
         # TODO: touch a file to indicate alive to monit?
       end
     rescue TerminateException
-      Rails.logger.info "#{Time.now} Stopping observations."
+      Rails.logger.info "#{Time.zone.now} Stopping observations."
     end
   end
 end

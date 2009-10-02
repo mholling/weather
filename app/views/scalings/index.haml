@@ -1,0 +1,18 @@
+- content_for :head do
+  = stylesheet_link_tag "jquery.jqplot.min"
+  = stylesheet_link_tag "jquery-ui-1.7.2.custom"
+  = javascript_include_tag "jquery-1.3.2.min"
+  = javascript_include_tag "jqplot/jquery.jqplot.min"
+  = javascript_include_tag "jqplot/plugins/jqplot.dateAxisRenderer.min"
+  = javascript_include_tag "jquery-ui-1.7.2.custom.min"
+  %script{:type => "text/javascript", :src => scalings_path(:format => :js)}
+#date
+#tabs
+  %ul
+    - @scalings.group_by(&:scale).each do |scale, scalings|
+      %li
+        %a{:href => "##{dom_id(scale)}"}= scale.name.titleize
+  - @scalings.group_by(&:scale).each do |scale, scalings|
+    %div[scale]
+      - scalings.each do |scaling|
+        %div[scaling]{:style => "width: 700px; height: 180px;"}

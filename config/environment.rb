@@ -7,7 +7,8 @@ RAILS_GEM_VERSION = '2.3.4' unless defined? RAILS_GEM_VERSION
 require File.join(File.dirname(__FILE__), 'boot')
 
 app_config = YAML.load_file(Rails.root.join("config", "application.yml"))
-APP_CONFIG = app_config["common"].merge(app_config[RAILS_ENV] || {})
+require 'lib/hash'
+APP_CONFIG = app_config["common"].deep_merge(app_config[RAILS_ENV] || {})
 
 Rails::Initializer.run do |config|
   # Settings in config/environments/* take precedence over those specified here.
@@ -17,6 +18,7 @@ Rails::Initializer.run do |config|
   # Add additional load paths for your own custom dirs
   # config.load_paths += %W( #{RAILS_ROOT}/extras )
   config.load_paths += %W( #{RAILS_ROOT}/app/observers )
+  config.load_paths += Dir["#{RAILS_ROOT}/app/models/**/"]
 
   # Specify gems that this application depends on and have them installed with rake gems:install
   # config.gem "bj"

@@ -1,0 +1,91 @@
+var app = {
+  load: function() {
+    this.date.load();
+    this.tabs.load();
+    this.charts.load();
+  },
+  
+  date: {
+    load: function() {
+      jQuery.getJSON('<%= observation_range_path(:format => :json) %>', function(range) {
+        var options = {
+          changeMonth: true,
+          changeYear: true,
+          minDate: new Date(range.minDate),
+          maxDate: new Date(range.maxDate),
+          onSelect: function(dateText, inst) {
+            app.date.changed();
+          }
+        };
+        $('#date').datepicker(options);
+        app.date.changed(app.tabs.selected());
+      });
+    },
+    
+    changed: function() {
+      app.charts.changed(app.tabs.selected());
+    },
+    
+    string: function() {
+      return $('#date').datepicker('getDate').toDateString();
+    }
+  },
+  
+  tabs: {
+    load: function() {
+      $('#tabs').tabs({
+        select: function(event, ui) {
+          app.charts.changed(ui.index);
+        }
+      });
+    },
+    
+    selected: function() {
+      return $('#tabs').tabs('option', 'selected');
+    }
+  },
+  
+  charts: {
+    load: function() {
+    },
+        
+    changed: function(tab_index) {
+      <%- @scalings.group_by(&:scale).each_with_index do |(scale, scalings), index| -%>
+        if (tab_index == <%= index %>) {
+          <%- scalings.each do |scaling| -%>
+            var url = '<%= scaling_path(scaling, :format => :json) %>?date='+encodeURI(app.date.string());
+            app.charts.updateChart(url, $('#<%= dom_id(scaling) %>'))
+          <%- end -%>
+        };
+      <%- end -%>
+    },
+    
+    updateChart: function(url, charts) {
+      jQuery.getJSON(url, function(result) {
+        charts.empty();
+        app.charts.replaceRenderers(result.options);
+        charts.each(function(index, chart) {
+          $.jqplot(chart.id, result.data, result.options);          
+        });
+      });
+    },
+    
+    replaceRenderers: function(options) {
+      for (option in options) {
+        switch(typeof(options[option])) {
+          case 'object':
+            app.charts.replaceRenderers(options[option]);
+            break;
+          case 'string':
+            if (/^\$\.jqplot\.\w+$/.test(options[option])) {
+              options[option] = eval(options[option]);
+            };
+        };
+      };
+    }
+  }
+};
+
+$(function() {
+  app.load();
+})

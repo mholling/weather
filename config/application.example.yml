@@ -4,3 +4,8 @@ common:
     port: 4304
     units: celsius
   time_zone: Canberra
+  start_of_meteorological_day: 9
+
+production:
+  restart_observations: "monit restart weather"
+  

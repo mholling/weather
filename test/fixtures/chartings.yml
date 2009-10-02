@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  chart: 
+  instrument: 
+  config: MyText
+
+two:
+  chart: 
+  instrument: 
+  config: MyText

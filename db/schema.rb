@@ -9,7 +9,23 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20090913080126) do
+ActiveRecord::Schema.define(:version => 20091001223851) do
+
+  create_table "chartings", :force => true do |t|
+    t.integer  "chart_id"
+    t.integer  "instrument_id"
+    t.text     "config"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "charts", :force => true do |t|
+    t.string   "name"
+    t.string   "type"
+    t.text     "config"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "components", :force => true do |t|
     t.integer  "device_id"
@@ -37,6 +53,21 @@ ActiveRecord::Schema.define(:version => 20090913080126) do
   create_table "observations", :force => true do |t|
     t.integer  "instrument_id"
     t.float    "value"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "scales", :force => true do |t|
+    t.string   "name"
+    t.text     "config"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "scalings", :force => true do |t|
+    t.integer  "chart_id"
+    t.integer  "scale_id"
+    t.integer  "position"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
