@@ -54,7 +54,7 @@ production:
     Rake::Task["vlad:yaml:database"].invoke
   end
   
-  namespace :dameon do
+  namespace :daemon do
     desc "Stop weather daemon."
     remote_task :stop do
       run "sudo monit stop weather"
