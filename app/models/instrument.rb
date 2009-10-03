@@ -32,9 +32,11 @@ class Instrument < ActiveRecord::Base
   
   def observe!
     sleep [ time - Time.zone.now, 0 ].max
-    if value = self.read!
-      observations.create(:value => value)
-      Rails.logger.info("#{Time.zone.now} #{description.humanize} observed #{value}")
+    if values = self.read!
+      [ values ].flatten.each do |value|
+        observations.create(:value => value, :time => Time.zone.now)
+        Rails.logger.info("#{Time.zone.now} #{description.humanize} observed #{value}")
+      end
     end
   rescue SystemCallError => e
     Rails.logger.error("#{Time.zone.now} Problem reading #{description.downcase}: #{e.message.downcase}")

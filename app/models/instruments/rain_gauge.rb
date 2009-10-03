@@ -13,7 +13,7 @@ class RainGauge < Instrument
     if change > 0
       self.interval = [ interval / change, 1 ].max if change > 1
       self.old_count = count
-      change * config['per_tip']
+      [ config['per_tip'] ] * change
     else
       self.interval = [ 1.1 * interval, default_interval ].min
       nil
