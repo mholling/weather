@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091003003657) do
+ActiveRecord::Schema.define(:version => 20091003115318) do
 
   create_table "chartings", :force => true do |t|
     t.integer  "chart_id"
@@ -54,6 +54,7 @@ ActiveRecord::Schema.define(:version => 20091003003657) do
     t.integer  "instrument_id"
     t.float    "value"
     t.datetime "time"
+    t.date     "meteorological_date"
   end
 
   create_table "scales", :force => true do |t|

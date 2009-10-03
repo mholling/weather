@@ -2,15 +2,12 @@ class DailyTemperaturesChart < Chart
   include MeteorologicalDay
   
   def data(interval)
-    time = interval.begin.end_of_day
-    series = []
-    while time <= interval.end
-      observations = instrument.observations.during(meteorological_day_including(time))
-      min = observations.minimum(:value)
-      max = observations.maximum(:value)
-      series << [ time.beginning_of_day.to_js, max, max, min, min ] if min && max
-      time = time + 1.day
-    end
+    start = meteorological_day_including(interval.begin).begin
+    finish = meteorological_day_including(interval.end).end
+    maximums = instrument.observations.during(start...finish).maximum(:value, :group => :meteorological_date)
+    minimums = instrument.observations.during(start...finish).minimum(:value, :group => :meteorological_date)
+    series = [ maximums.keys, maximums.values, maximums.values, minimums.values, minimums.values ].transpose
     [ series ]
   end
+
 end
