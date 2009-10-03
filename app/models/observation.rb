@@ -10,6 +10,14 @@ class Observation < ActiveRecord::Base
   named_scope :chronological, :order => :time
   named_scope :during, lambda { |interval| { :conditions => { :time => interval.utc } } }
   
+  before_save :set_meteorological_date
+  
+  protected
+  
+  def set_meteorological_date
+    self.meteorological_date = meteorological_date_for(time) if time
+  end
+  
   class << self
     def generate_meteorological_dates!
       find_each do |observation|

@@ -57,16 +57,19 @@ production:
   namespace :daemon do
     desc "Stop weather daemon."
     remote_task :stop do
-      run "sudo monit stop weather"
+      # run "sudo monit stop weather"
     end
     
     desc "Start weather daemon."
     remote_task :start do
-      run "sudo monit start weather"
+      # run "sudo monit start weather"
     end
   end
   
+  task :update => "daemon:stop"
+  task :start_app => "daemon:start"
+  
   desc "Deploy application."
-  task :deploy => [ "vlad:daemon:stop", "vlad:update", "vlad:symlink", "vlad:yaml:application", "vlad:migrate", "vlad:start_app", "vlad:daemon:start" ]
+  task :deploy => [ "vlad:update", "vlad:symlink", "vlad:yaml:application", "vlad:migrate", "vlad:start_app" ]
   
 end
