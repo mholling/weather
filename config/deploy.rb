@@ -67,6 +67,6 @@ production:
   end
   
   desc "Deploy application."
-  task :deploy => [ "daemon:stop", "vlad:update", "vlad:symlink", "vlad:yaml:application", "vlad:migrate", "vlad:start_app", "daemon:start" ]
+  task :deploy => [ "vlad:daemon:stop", "vlad:update", "vlad:symlink", "vlad:yaml:application", "vlad:migrate", "vlad:start_app", "vlad:daemon:start" ]
   
 end
