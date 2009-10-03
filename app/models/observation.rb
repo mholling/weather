@@ -6,6 +6,7 @@ class Observation < ActiveRecord::Base
   validates_presence_of :instrument
   validates_presence_of :value
   validates_presence_of :time
+  validates_presence_of :meteorological_date
   
   named_scope :chronological, :order => :time
   named_scope :during, lambda { |interval| { :conditions => { :time => interval.utc } } }
@@ -15,7 +16,7 @@ class Observation < ActiveRecord::Base
   protected
   
   def set_meteorological_date
-    self.meteorological_date = meteorological_date_for(time) if time
+    self.meteorological_date = Observation.meteorological_date_for(time) if time
   end
   
   class << self
