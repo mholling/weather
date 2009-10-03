@@ -54,7 +54,19 @@ production:
     Rake::Task["vlad:yaml:database"].invoke
   end
   
+  namespace :dameon do
+    desc "Stop weather daemon."
+    remote_task :stop do
+      run "sudo monit stop weather"
+    end
+    
+    desc "Start weather daemon."
+    remote_task :start do
+      run "sudo monit start weather"
+    end
+  end
+  
   desc "Deploy application."
-  task :deploy => [ "vlad:update", "vlad:symlink", "vlad:yaml:application", "vlad:migrate", "vlad:start_app" ]
+  task :deploy => [ "daemon:stop", "vlad:update", "vlad:symlink", "vlad:yaml:application", "vlad:migrate", "vlad:start_app", "daemon:start" ]
   
 end
