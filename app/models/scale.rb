@@ -2,7 +2,7 @@ class Scale < ActiveRecord::Base
   has_many :scalings, :dependent => :destroy
   has_many :charts, :through => :scalings
   
-  # TODO: add :interval column instead of having it in the config...
+  # TODO: improve the way the scales work?
   
   serialize :config, Hash
   
@@ -11,8 +11,9 @@ class Scale < ActiveRecord::Base
   end
   
   def interval(date)
-    finish = (date + 1.day).beginning_of_day
-    start = finish - config["interval"].days
+    units = config["units"].downcase.pluralize
+    finish = date.to_time.send("end_of_#{units.singularize}") + 1.second
+    start = finish - config["interval"].send(units)
     (start...finish)
   end
   
