@@ -11,7 +11,7 @@ class Observation < ActiveRecord::Base
   named_scope :chronological, :order => :time
   named_scope :during, lambda { |interval| { :conditions => { :time => interval.utc } } }
   
-  before_save :set_meteorological_date
+  before_validation :set_meteorological_date
   
   protected
   

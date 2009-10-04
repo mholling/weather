@@ -36,6 +36,8 @@ common:
             showMark: false
             formatString: "%i &#186;C"
             formatString: "%i"
+      seriesDefaults:
+        showLine: false
 
   rainfall_chart:
     jqplot:
