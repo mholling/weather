@@ -68,49 +68,41 @@ var app = {
     },
         
     hover: {
-      seriesIndex: null,
-      
       dataIndex: null,
-      
-      different: function(item) {
-        if (item.dataIndex == app.charts.hover.dataIndex && item.seriesIndex == app.charts.hover.seriesIndex) {
-          return false;
-        } else {
-          app.charts.hover.dataIndex = item.dataIndex;
-          app.charts.hover.seriesIndex = item.seriesIndex;
-          return true;
-        };
-      },
-      
+      seriesIndex: null,
+
       show: function(item) {
         if (item) {
-          if (app.charts.hover.different(item)) {
-            app.charts.hoverItem = item
+          if (app.charts.hover.dataIndex != item.dataIndex || app.charts.hover.seriesIndex != item.seriesIndex) {
+            app.charts.hover.dataIndex = item.dataIndex;
+            app.charts.hover.seriesIndex = item.seriesIndex;
             var time = new Date(item.datapoint[0]);
             var value = item.datapoint[1];
-            app.charts.hideToolTip();
-            app.charts.showToolTip(item.pageX, item.pageY, time, value);
+            app.charts.hover.showToolTip(item.pageX, item.pageY, time, value);
           };
         } else {
-          app.charts.hideToolTip();
+          app.charts.hover.dataIndex = null;
+          app.charts.hover.seriesIndex = null;
+          app.charts.hover.hideToolTip();
         };
-      }
-    },
+      },
     
-    showToolTip: function(pageX, pageY, time, value) {
-      $('<div id="tooltip">' + value.toFixed(1) + '</div>').css( {
-        position: 'absolute',
-        display: 'none',
-        top: pageY - 30,
-        left: pageX,
-        padding: '5px',
-        'background-color': '#ff4',
-        opacity: 0.80
-      }).appendTo('body').fadeIn(200);
-    },
+      showToolTip: function(pageX, pageY, time, value) {
+        app.charts.hover.hideToolTip();
+        $('<div id="tooltip">' + value.toFixed(1) + '</div>').css( {
+          position: 'absolute',
+          display: 'none',
+          top: pageY - 30,
+          left: pageX,
+          padding: '5px',
+          'background-color': '#ff4',
+          opacity: 0.80
+        }).appendTo('body').fadeIn(200);
+      },
     
-    hideToolTip: function() {
-      $('#tooltip').remove();
+      hideToolTip: function() {
+        $('#tooltip').remove();
+      },
     },
     
     <%- @scalings.group_by(&:scale).each_with_index do |(scale, scalings), index| -%>
