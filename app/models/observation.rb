@@ -4,17 +4,15 @@ class Observation < ActiveRecord::Base
   belongs_to :instrument
   
   validates_presence_of :instrument
-  validates_presence_of :value
   validates_presence_of :time
   validates_presence_of :meteorological_date
   
   named_scope :chronological, :order => :time
   named_scope :during, lambda { |interval| { :conditions => { :time => interval.utc } } }
+  named_scope :with_value, :conditions => [ "value IS NOT :nil", { :nil => nil } ]
   
   before_validation :set_meteorological_date
-  
-  protected
-  
+    
   def set_meteorological_date
     self.meteorological_date = Observation.meteorological_date_for(time) if time
   end
@@ -22,7 +20,7 @@ class Observation < ActiveRecord::Base
   class << self
     def generate_meteorological_dates!
       find_each do |observation|
-        observation.update_attributes(:meteorological_date => meteorological_date_for(observation.time))
+        observation.set_meteorological_date
       end
     end
   end

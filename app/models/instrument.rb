@@ -30,6 +30,10 @@ class Instrument < ActiveRecord::Base
     time <= Time.zone.now
   end
   
+  def start!
+    observations.create!(:value => nil, :time => Time.zone.now)
+  end
+  
   def observe!
     sleep [ time - Time.zone.now, 0 ].max
     if values = self.read!
@@ -63,6 +67,7 @@ class Instrument < ActiveRecord::Base
     def observe!
       Rails.logger.info "#{Time.zone.now} Starting observations."
       instruments = active.all(:include => :devices)
+      instruments.each(&:start!)
       while true do
         instruments.sort!
         until instruments.first.due?
