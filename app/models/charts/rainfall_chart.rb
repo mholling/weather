@@ -14,4 +14,5 @@ class RainfallChart < Chart
     end
     [ series ]
   end
+
 end

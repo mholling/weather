@@ -1,71 +1,97 @@
 common:
   one_wire:
-    host: localhost
-    port: 4304
-    units: celsius
     retries:
       EINVAL: 100
       ENOENT: 10
 
   time_zone: Canberra
   start_of_meteorological_day: 9
-
+  
   jqplot:
     seriesDefaults:
       showMarker: false
     grid:
       shadow: false
-
+  
+  flot:
+    
+  
   scale:
-    jqplot:
-      axes:
-        xaxis:
-          pad: 1.0
-          renderer: $.jqplot.DateAxisRenderer
-          tickOptions:
-            showMark: false 
-
+    flot:
+      shadowSize: 0
+      xaxis:
+        mode: time
+        monthNames:
+          - January
+          - February
+          - March
+          - April
+          - May
+          - June
+          - July
+          - August
+          - September
+          - October
+          - November
+          - December
+  
   temperature_chart:
-    jqplot:
-      axes:
-        yaxis:
-          min: -5
-          max: 40
-          tickInterval: 5
-          tickOptions:
-            showMark: false
-            formatString: "%i &#186;C"
-            formatString: "%i"
-      seriesDefaults:
-        showLine: false
+    flot:
+      yaxis:
+        min: -5
+        max: 40
+      lines:
+        lineWidth: 3
+      colors:
+        - "#ff0000"
 
   rainfall_chart:
-    jqplot:
-      axes:
-        yaxis:
-          min: 0
-          tickInterval: 2
-          tickOptions:
-            showMark: false
-            formatString: "%.1f mm"
-            formatString: "%.1f"
-
+    flot:
+      yaxis:
+        min: 0
+      lines:
+        lineWidth: 3
+      colors:
+        - "#0000ff"
+        
+  
   daily_temperatures_chart:
-    jqplot:
-      axes:
-        yaxis:
-          min: -10
-          max: 45
-          tickInterval: 5
-          tickOptions:
-            showMark: false
-            formatString: "%i &#186;C"
-            formatString: "%i"
-      seriesDefaults:
-        renderer: $.jqplot.OHLCRenderer
-        rendererOptions:
-          tickLength: 0
-          lineWidth: 1
+    flot:
+      line:
+        show: false
+      bars:
+        show: true
+        barWidth: 86400000
+        lineWidth: 0
+        align: center
+        fill: 1
+      yaxis:
+        min: -10
+        max: 45
+      colors:
+        - "#ff2222"
+        - "#2222ff"
+  
+  daily_rainfall_chart:
+    flot:
+      lines:
+        show: false
+      bars:
+        show: true
+        barWidth: 86400000
+        lineWidth: 0
+        align: center
+        fill: 1
+      yaxis:
+        min: 0
+      colors:
+        - "#0000ff"
+
+development:
+  one_wire:
+    host: ip-address-of-one-wire-server
 
 production:
+  one_wire:
+    host: localhost
   restart_observations: "monit restart weather"

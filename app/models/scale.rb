@@ -12,14 +12,14 @@ class Scale < ActiveRecord::Base
   
   def interval(date)
     units = config["units"].downcase.pluralize
-    finish = date.to_time.send("end_of_#{units.singularize}") + 1.second
-    start = finish - config["interval"].send(units)
-    (start...finish)
+    finish = date.to_time.send("end_of_#{units.singularize}")
+    start = (finish + 1.second) - config["interval"].send(units)
+    (start..finish)
   end
   
   def options(date)
-    date_options = { "axes" => { "xaxis" => { "min" => interval(date).begin.to_js, "max" => interval(date).end.to_js } } }
-    self.class.options.deep_merge(config["jqplot"] || {}).deep_merge(date_options)
+    date_options = { "xaxis" => { "min" => interval(date).begin.to_js, "max" => interval(date).end.to_js } }
+    self.class.options.deep_merge(config["flot"] || {}).deep_merge(date_options)
   end
   
   def self.config
@@ -27,6 +27,6 @@ class Scale < ActiveRecord::Base
   end
   
   def self.options
-    config["jqplot"] || {}
+    config["flot"] || {}
   end
 end

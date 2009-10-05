@@ -16,7 +16,7 @@ class Chart < ActiveRecord::Base
   end
   
   def options
-    self.class.options.deep_merge(config["jqplot"] || {})
+    self.class.options.deep_merge(config["flot"] || {})
   end
   
   def self.config
@@ -24,6 +24,6 @@ class Chart < ActiveRecord::Base
   end
   
   def self.options
-    config["jqplot"] || {}
+    config["flot"] || {}
   end
 end

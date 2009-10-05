@@ -1,11 +1,13 @@
-class ActiveSupport::TimeWithZone
+module JavascriptTime
   def to_js
-    to_i * 1000
+    (to_i + utc_offset) * 1000
   end
 end
 
+class ActiveSupport::TimeWithZone
+  include JavascriptTime
+end
+
 class Time
-  def to_js
-    to_i * 1000
-  end
+  include JavascriptTime
 end

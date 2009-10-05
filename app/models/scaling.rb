@@ -6,7 +6,7 @@ class Scaling < ActiveRecord::Base
   validates_presence_of :scale
   
   def options(date)
-    (APP_CONFIG["jqplot"] || {}).deep_merge(scale.options(date)).deep_merge(chart.options)
+    (APP_CONFIG["flot"] || {}).deep_merge(scale.options(date)).deep_merge(chart.options)
   end
   
   def data(date)

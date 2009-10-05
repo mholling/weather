@@ -60,28 +60,11 @@ var app = {
       <%- end -%>
     },
     
-    updateChart: function(url, charts) {
+    updateChart: function(url, chart) {
       jQuery.getJSON(url, function(result) {
-        charts.empty();
-        app.charts.replaceRenderers(result.options);
-        charts.each(function(index, chart) {
-          $.jqplot(chart.id, result.data, result.options);          
-        });
+        chart.empty();
+        $.plot(chart, result.data, result.options);
       });
-    },
-    
-    replaceRenderers: function(options) {
-      for (option in options) {
-        switch(typeof(options[option])) {
-          case 'object':
-            app.charts.replaceRenderers(options[option]);
-            break;
-          case 'string':
-            if (/^\$\.jqplot\.\w+$/.test(options[option])) {
-              options[option] = eval(options[option]);
-            };
-        };
-      };
     }
   }
 };
