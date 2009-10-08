@@ -197,24 +197,9 @@ var app = {
   statistics: {
     init: function() {
     },
-    
-    <%- @scalings.for(Statistic).each do |scaling| -%>
-      <%= dom_id(scaling.statistic.becomes Statistic) %>: {
-        data: null,
-        url: '<%= scaling_statistic_path(scaling, :format => :json) %>',
-      },
-      
-    <%- end -%>
-    
-    reset: function() {
-      <%- @scalings.for(Statistic).each do |scaling| -%>
-        this.<%= dom_id(scaling.statistic.becomes Statistic) %>.data = null;
-      <%- end -%>
-      this.loadScale(app.tabs.selectedTab());
-    },
-    
+        
     loadScale: function(tabIndex) {
-      // this.load($('.scale:eq('+tabIndex+') .charts .scaling'));
+      this.load($('.scale:eq('+tabIndex+') .charts .scaling'));
     }
   },
   

@@ -16,10 +16,10 @@
         %ul.charts.scalings
           - scalings.select { |scaling| scaling.scalable_type == Chart.name }.each do |scaling|
             %li.chart[scaling]
-              %div.plot
               %div.handle drag!
+              %div.plot
         %ul.statistics.scalings
           - scalings.select { |scaling| scaling.scalable_type == Statistic.name }.each do |scaling|
             %li.statistic[scaling]
-              %div.summary= scaling.statistic.name
               %div.handle drag!
+              %div.info
