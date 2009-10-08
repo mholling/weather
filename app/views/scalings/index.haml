@@ -10,7 +10,12 @@
     - @scalings.group_by(&:scale).each do |scale, scalings|
       %li
         %a{:href => "##{dom_id(scale)}"}= scale.name.titleize
-  - @scalings.group_by(&:scale).each do |scale, scalings|
-    %div[scale]
-      - scalings.each do |scaling|
-        %div[scaling]{:style => "width: 900px; height: 180px;"}
+  %ul.scales
+    - @scalings.group_by(&:scale).each do |scale, scalings|
+      %li[scale]
+        %ul.charts
+          - scalings.select { |scaling| scaling.scalable_type == Chart.name }.each do |scaling|
+            %li[scaling]
+        %ul.statistics
+          - scalings.select { |scaling| scaling.scalable_type == Statistic.name }.each do |scaling|
+            %li[scaling]

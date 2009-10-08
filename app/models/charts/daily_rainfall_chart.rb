@@ -8,5 +8,4 @@ class DailyRainfallChart < Chart
     series = [ sums.keys.map(&:beginning_of_day).map(&:to_js), sums.values ].transpose
     [ series ]
   end
-
 end

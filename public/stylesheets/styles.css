@@ -76,5 +76,11 @@ input[type="checkbox"], input[type="radio"] {
 
 body {
   margin: auto; }
-  body .chart {
-    margin: 30px auto; }
+  body .charts .scaling {
+    width: 900px;
+    height: 180px; }
+  body .statistics .scaling {
+    width: 100px;
+    height: 50px;
+    border: 1px solid gray;
+    margin: 10px; }

@@ -1,6 +1,7 @@
 class Scale < ActiveRecord::Base
   has_many :scalings, :dependent => :destroy
-  has_many :charts, :through => :scalings
+  has_many :charts, :through => :scalings, :source => :chart, :conditions => { "scalings.scalable_type" => Chart.name }
+  has_many :statistics, :through => :scalings, :source => :statistic, :conditions => { "scalings.scalable_type" => Statistic.name }
   
   # TODO: improve the way the scales work?
   

@@ -3,10 +3,14 @@ class Instrument < ActiveRecord::Base
   has_many :components
   has_many :devices, :through => :components
   has_one :device, :through => :components
+  
   has_many :observations
-  has_many :chartings
+  
+  has_many :chartings, :dependent => :destroy
   has_many :charts, :through => :chartings
   
+  has_many :variables, :dependent => :destroy
+  has_many :statistics, :through => :variables  
   
   validates_associated :devices
   

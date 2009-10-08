@@ -8,7 +8,5 @@ class DailyTemperaturesChart < Chart
     minimums = instrument.observations.with_value.during(start..finish).minimum(:value, :group => :meteorological_date)
     series = [ maximums.keys.map(&:beginning_of_day).map(&:to_js), maximums.values, minimums.values ].transpose
     [ series ]
-
   end
-
 end
