@@ -10,29 +10,11 @@ var app = {
   init: function() {
     this.date.init();
     this.tabs.init();
-    this.charts.init();
-    this.statistics.init();
+    this.scalings.init();
+    this.zoom.init();
+    this.hover.init();
+    this.spinners.init();
     this.sortable.init();
-  },
-  
-  scalings: {
-    <%- @scalings.group_by(&:scalable_type).each do |scalable_type, scalings| -%>
-      <%- scalings.each do |scaling| -%>
-        <%= dom_id(scaling) %>: {
-          url: '<%= scaling_path(scaling) %>',
-          <%= scaling.scalable_type.underscore %>: {
-            url: '<%= send "scaling_#{scalable_type.underscore}_path", scaling, :format => :json %>',
-            response: null,
-            
-            <%- if scalable_type == Chart.name -%>
-              tickFormatter: function(value, axis) {
-                return value + '<%= scaling.chart.config["units"] %>'
-              }
-            <%- end -%>
-          }
-        },
-      <%- end -%>
-    <%- end -%>
   },
   
   date: {
@@ -52,8 +34,7 @@ var app = {
     },
     
     changed: function(dateText, inst) {
-      app.charts.reset();
-      app.statistics.reset();
+      app.scalings.reset();
     },
     
     string: function() {
@@ -69,8 +50,7 @@ var app = {
     },
     
     selected: function(event, ui) {
-      app.charts.loadScale(ui.index);
-      app.statistics.loadScale(ui.index)
+      app.scalings.loadScale(ui.index);
     },
     
     selectedTab: function() {
@@ -78,131 +58,143 @@ var app = {
     }
   },
   
-  charts: {
+  scalings: {
+    <%- @scalings.group_by(&:scalable_type).each do |scalable_type, scalings| -%>
+      <%- scalings.each do |scaling| -%>
+        <%= dom_id(scaling) %>: {
+          url: '<%= scaling_path(scaling) %>',
+          scalable: {
+            url: '<%= send "scaling_#{scalable_type.underscore}_path", scaling, :format => :json %>',
+            response: null,
+            
+            <%- if scalable_type == Chart.name -%>
+              tickFormatter: function(value, axis) {
+                return value + '<%= scaling.chart.config["units"] %>'
+              }
+            <%- end -%>
+          }
+        },
+      <%- end -%>
+    <%- end -%>
+
     init: function() {
-      this.zoom.init();
-      this.hover.init();
-      this.spinners.init();
     },
 
     reset: function() {
-      <%- @scalings.for(Chart).each do |scaling| -%>
-        app.scalings.<%= dom_id(scaling) %>.chart.response = null;
+      <%- @scalings.each do |scaling| -%>
+        app.scalings.<%= dom_id(scaling) %>.scalable.response = null;
       <%- end -%>
       this.loadScale(app.tabs.selectedTab());
     },
 
     loadScale: function(tabIndex) {
-      this.load($('.scale:eq('+tabIndex+') .scaling.chart'));
+      this.load($('.scale:eq('+tabIndex+') .scaling'));
     },
     
     load: function(scalings) {
       scalings.each(function(index, scaling) {
-        if (app.scalings[scaling.id].chart.response == null) {
-          $(scaling).children('.plot').empty();
-          url = app.scalings[scaling.id].chart.url+'?date='+encodeURI(app.date.string());
+        if (app.scalings[scaling.id].scalable.response == null) {
+          $(scaling).children('.content').empty();
+          url = app.scalings[scaling.id].scalable.url+'?date='+encodeURI(app.date.string());
           jQuery.getJSON(url, function(result) {
-            app.scalings[scaling.id].chart.response = result;
-            app.charts.draw(scaling);
+            app.scalings[scaling.id].scalable.response = result;
+            app.scalings.render(scaling);
           });
         };
       });
     },
           
-    draw: function(scaling, options) {
-      opts = $.extend(true, {}, app.scalings[scaling.id].chart.response.options);
-      opts = $.extend(true, opts, options || {});
-      opts = $.extend(true, opts, {
-        yaxis: {
-          tickFormatter: app.scalings[scaling.id].chart.tickFormatter
-        }
-      });
-      $.plot($(scaling).find('.plot'), app.scalings[scaling.id].chart.response.data, opts);
-    },
-    
-    zoom: {
-      init: function() {
-        $('.scaling').bind('plotselected', function(event, ranges) {
-          app.charts.zoom.draw($(event.target).parents('.scale').find('.scaling'), ranges);
+    render: function(scaling, options) {
+      if ($(scaling).is('.chart')) {
+        opts = $.extend(true, {}, app.scalings[scaling.id].scalable.response.options);
+        opts = $.extend(true, opts, options || {});
+        opts = $.extend(true, opts, {
+          yaxis: {
+            tickFormatter: app.scalings[scaling.id].scalable.tickFormatter
+          }
         });
-        $('.scaling').bind('plotunselected', function(event) {
-          app.charts.draw($(event.target).parents('.scale').find('.scaling').get(0));
-        });
-      },
-    
-      draw: function(scalings, ranges) {
-        scalings.each(function(index, scaling) {
-          app.charts.draw(scaling, {
-            xaxis: {
-              min: ranges.xaxis.from,
-              max: ranges.xaxis.to
-            }
-          });          
-        });
-      }
-    },
-
-    hover: {
-      dataIndex: null,
-      seriesIndex: null,
-
-      init: function() {        
-        $('.scaling.chart').bind('plothover', function(event, position, item) {
-          app.charts.hover.show($(event.target).parents('.scaling').get(0), item);
-        });
-      },
-
-      show: function(scaling, item) {
-        if (item) {
-          if (app.charts.hover.dataIndex != item.dataIndex || app.charts.hover.seriesIndex != item.seriesIndex) {
-            this.dataIndex = item.dataIndex;
-            this.seriesIndex = item.seriesIndex;
-            this.showToolTip(scaling, item);
-          };
-        } else {
-          this.dataIndex = null;
-          this.seriesIndex = null;
-          this.hideToolTip();
-        };
-      },
-
-      showToolTip: function(scaling, item) {
-        for (values = [], n = 1; n < app.scalings[scaling.id].chart.response.data[item.seriesIndex][0].length; n++) {
-          values.push(app.scalings[scaling.id].chart.tickFormatter(item.datapoint[n].toFixed(1)));
-        };
-        this.hideToolTip();
-        $('<div id="tooltip">' + values.join('<br>') + '</div>').css( {
-          position: 'absolute',
-          display: 'none',
-          top: item.pageY - 35,
-          left: item.pageX + 5,
-          padding: '5px',
-          'background-color': '#ff4',
-          opacity: 0.80
-        }).appendTo('body').fadeIn(200);
-      },
-
-      hideToolTip: function() {
-        $('#tooltip').remove();
-      }
-    },
-    
-    spinners: {
-      init: function() {
-        
+        $.plot($(scaling).find('.content'), app.scalings[scaling.id].scalable.response.data, opts);
+      } else {
+        $(scaling).find('.content').html(app.scalings[scaling.id].scalable.response.message)
       }
     }
   },
   
-  statistics: {
+  zoom: {
     init: function() {
+      $('.scaling.chart').bind('plotselected', function(event, ranges) {
+        app.zoom.render($(event.target).parents('.scale').find('.scaling.chart'), ranges);
+      });
+      $('.scaling.chart').bind('plotunselected', function(event) {
+        $(event.target).parents('.scale').find('.scaling.chart').each(function(index, scaling) {          
+          app.scalings.render(scaling);
+        })
+      });
     },
-        
-    loadScale: function(tabIndex) {
-      this.load($('.scale:eq('+tabIndex+') .charts .scaling'));
+  
+    render: function(scalings, ranges) {
+      scalings.each(function(index, scaling) {
+        app.scalings.render(scaling, {
+          xaxis: {
+            min: ranges.xaxis.from,
+            max: ranges.xaxis.to
+          }
+        });          
+      });
     }
   },
-  
+
+  hover: {
+    dataIndex: null,
+    seriesIndex: null,
+
+    init: function() {        
+      $('.scaling.chart').bind('plothover', function(event, position, item) {
+        app.hover.show($(event.target).parents('.scaling').get(0), item);
+      });
+    },
+
+    show: function(scaling, item) {
+      if (item) {
+        if (this.dataIndex != item.dataIndex || this.seriesIndex != item.seriesIndex) {
+          this.dataIndex = item.dataIndex;
+          this.seriesIndex = item.seriesIndex;
+          this.showToolTip(scaling, item);
+        };
+      } else {
+        this.dataIndex = null;
+        this.seriesIndex = null;
+        this.hideToolTip();
+      };
+    },
+
+    showToolTip: function(scaling, item) {
+      for (values = [], n = 1; n < app.scalings[scaling.id].scalable.response.data[item.seriesIndex][0].length; n++) {
+        values.push(app.scalings[scaling.id].scalable.tickFormatter(item.datapoint[n].toFixed(1)));
+      };
+      this.hideToolTip();
+      $('<div id="tooltip">' + values.join('<br>') + '</div>').css( {
+        position: 'absolute',
+        display: 'none',
+        top: item.pageY - 35,
+        left: item.pageX + 5,
+        padding: '5px',
+        'background-color': '#ff4',
+        opacity: 0.80
+      }).appendTo('body').fadeIn(200);
+    },
+
+    hideToolTip: function() {
+      $('#tooltip').remove();
+    }
+  },
+    
+  spinners: {
+    init: function() {
+      
+    }
+  },
+    
   sortable: {
     init: function() {
       $('.scalings').sortable({

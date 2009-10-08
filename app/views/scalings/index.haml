@@ -17,9 +17,9 @@
           - scalings.select { |scaling| scaling.scalable_type == Chart.name }.each do |scaling|
             %li.chart[scaling]
               %div.handle drag!
-              %div.plot
+              %div.content
         %ul.statistics.scalings
           - scalings.select { |scaling| scaling.scalable_type == Statistic.name }.each do |scaling|
             %li.statistic[scaling]
               %div.handle drag!
-              %div.info
+              %div.content
