@@ -1,9 +1,38 @@
+$.extend({
+  keys: function(obj) {
+    var a = [];
+    $.each(obj, function(k){ a.push(k) });
+    return a;
+  }
+});
+
 var app = {
   init: function() {
     this.date.init();
     this.tabs.init();
     this.charts.init();
     this.statistics.init();
+    this.sortable.init();
+  },
+  
+  scalings: {
+    <%- @scalings.group_by(&:scalable_type).each do |scalable_type, scalings| -%>
+      <%- scalings.each do |scaling| -%>
+        <%= dom_id(scaling) %>: {
+          url: '<%= scaling_path(scaling) %>',
+          <%= scaling.scalable_type.underscore %>: {
+            url: '<%= send "scaling_#{scalable_type.underscore}_path", scaling, :format => :json %>',
+            response: null,
+            
+            <%- if scalable_type == Chart.name -%>
+              tickFormatter: function(value, axis) {
+                return value + '<%= scaling.chart.config["units"] %>'
+              }
+            <%- end -%>
+          }
+        },
+      <%- end -%>
+    <%- end -%>
   },
   
   date: {
@@ -55,75 +84,60 @@ var app = {
       this.hover.init();
       this.spinners.init();
     },
-    
-    <%- @scalings.for(Chart).each do |scaling| -%>
-      <%= dom_id(scaling) %>: {
-        data: null,
-        options: null,
-        url: '<%= scaling_path(scaling, :format => :json) %>',
-      
-        tickFormatter: function(value, axis) {
-          return value + '<%= scaling.chart.config["units"] %>'
-        }
-      },
-      
-    <%- end -%>
-      
+
     reset: function() {
       <%- @scalings.for(Chart).each do |scaling| -%>
-        this.<%= dom_id(scaling) %>.data = null;
-        this.<%= dom_id(scaling) %>.options = null;
+        app.scalings.<%= dom_id(scaling) %>.chart.response = null;
       <%- end -%>
       this.loadScale(app.tabs.selectedTab());
     },
 
     loadScale: function(tabIndex) {
-      this.load($('.scale:eq('+tabIndex+') .charts .scaling'));
+      this.load($('.scale:eq('+tabIndex+') .scaling.chart'));
     },
     
     load: function(scalings) {
       scalings.each(function(index, scaling) {
-        if (app.charts[scaling.id].data == null) {
-          url = app.charts[scaling.id].url+'?date='+encodeURI(app.date.string());
-          $(scaling).empty();
+        if (app.scalings[scaling.id].chart.response == null) {
+          $(scaling).children('.plot').empty();
+          url = app.scalings[scaling.id].chart.url+'?date='+encodeURI(app.date.string());
           jQuery.getJSON(url, function(result) {
-            app.charts[scaling.id].data = result.data;
-            app.charts[scaling.id].options = result.options;
-            app.charts.draw($(scaling));
+            app.scalings[scaling.id].chart.response = result;
+            app.charts.draw(scaling);
           });
         };
       });
     },
           
-    draw: function(scalings, options) {
-      scalings.each(function(index, scaling) {
-        opts = $.extend(true, {}, app.charts[scaling.id].options);
-        opts = $.extend(true, opts, options || {});
-        opts = $.extend(true, opts, {
-          yaxis: {
-            tickFormatter: app.charts[scaling.id].tickFormatter
-          }
-        });
-        $.plot($(scaling), app.charts[scaling.id].data, opts);
+    draw: function(scaling, options) {
+      opts = $.extend(true, {}, app.scalings[scaling.id].chart.response.options);
+      opts = $.extend(true, opts, options || {});
+      opts = $.extend(true, opts, {
+        yaxis: {
+          tickFormatter: app.scalings[scaling.id].chart.tickFormatter
+        }
       });
+      $.plot($(scaling).find('.plot'), app.scalings[scaling.id].chart.response.data, opts);
     },
     
     zoom: {
       init: function() {
         $('.scaling').bind('plotselected', function(event, ranges) {
-          app.charts.zoom.draw($(event.target).parents('.scale'), ranges);
+          app.charts.zoom.draw($(event.target).parents('.scale').find('.scaling'), ranges);
         });
         $('.scaling').bind('plotunselected', function(event) {
-          app.charts.draw($(event.target).parents('.scale').children('.scaling'));
+          app.charts.draw($(event.target).parents('.scale').find('.scaling').get(0));
         });
       },
     
-      draw: function(scales, ranges) {
-        app.charts.draw(scales.children('.scaling'), {
-          xaxis: {
-            min: ranges.xaxis.from,
-            max: ranges.xaxis.to
-          }
+      draw: function(scalings, ranges) {
+        scalings.each(function(index, scaling) {
+          app.charts.draw(scaling, {
+            xaxis: {
+              min: ranges.xaxis.from,
+              max: ranges.xaxis.to
+            }
+          });          
         });
       }
     },
@@ -133,8 +147,8 @@ var app = {
       seriesIndex: null,
 
       init: function() {        
-        $('.scaling').bind('plothover', function(event, position, item) {
-          app.charts.hover.show(event.target, item);
+        $('.scaling.chart').bind('plothover', function(event, position, item) {
+          app.charts.hover.show($(event.target).parents('.scaling').get(0), item);
         });
       },
 
@@ -153,8 +167,8 @@ var app = {
       },
 
       showToolTip: function(scaling, item) {
-        for (values = [], n = 1; n < app.charts[scaling.id].data[item.seriesIndex][0].length; n++) {
-          values.push(app.charts[scaling.id].tickFormatter(item.datapoint[n].toFixed(1)));
+        for (values = [], n = 1; n < app.scalings[scaling.id].chart.response.data[item.seriesIndex][0].length; n++) {
+          values.push(app.scalings[scaling.id].chart.tickFormatter(item.datapoint[n].toFixed(1)));
         };
         this.hideToolTip();
         $('<div id="tooltip">' + values.join('<br>') + '</div>').css( {
@@ -183,24 +197,43 @@ var app = {
   statistics: {
     init: function() {
     },
-
+    
     <%- @scalings.for(Statistic).each do |scaling| -%>
-      <%= dom_id(scaling) %>: {
+      <%= dom_id(scaling.statistic.becomes Statistic) %>: {
         data: null,
-        url: '<%= scaling_path(scaling, :format => :json) %>',
+        url: '<%= scaling_statistic_path(scaling, :format => :json) %>',
       },
       
     <%- end -%>
     
     reset: function() {
       <%- @scalings.for(Statistic).each do |scaling| -%>
-        this.<%= dom_id(scaling) %>.data = null;
+        this.<%= dom_id(scaling.statistic.becomes Statistic) %>.data = null;
       <%- end -%>
       this.loadScale(app.tabs.selectedTab());
     },
     
     loadScale: function(tabIndex) {
       // this.load($('.scale:eq('+tabIndex+') .charts .scaling'));
+    }
+  },
+  
+  sortable: {
+    init: function() {
+      $('.scalings').sortable({
+        handle: '.handle',
+        placeholder: 'ui-state-highlight',
+        forcePlaceholderSize: true,
+        update: function(event, ui) {
+          url = app.scalings[ui.item[0].id].url;
+          data = {
+            _method: 'PUT',
+            position: ui.item.parents('.scalings').find('.scaling').index(ui.item)
+          };
+          $.post(url, data);          
+        }
+      });
+      $('.scalings').disableSelection();
     }
   }
 };

@@ -5,6 +5,9 @@ class FillPositions < ActiveRecord::Migration
         Scaling.update_all("position = #{index}", :id => id)
       end
     end
+    Scale.scoped(:order => :created_at).each_with_index do |scale, index|
+      Scale.update_all("position = #{index}", :id => scale.id)
+    end
   end
 
   def self.down

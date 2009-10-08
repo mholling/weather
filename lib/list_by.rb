@@ -27,6 +27,10 @@ module ListBy
           range = #{attribute} + 1 ... list_members.count
           list_members.scoped(:conditions => [ "#{attribute} > :#{attribute}", { :#{attribute} => #{attribute} } ]).update_all("#{attribute} = #{attribute} - 1")
         end
+        
+        def <=>(other)
+          #{attribute} <=> other.#{attribute}
+        end
       }
       
       before_validation_on_create :add_to_end_of_list

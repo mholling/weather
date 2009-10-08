@@ -3,6 +3,8 @@ class Scale < ActiveRecord::Base
   has_many :charts, :through => :scalings, :source => :chart, :conditions => { "scalings.scalable_type" => Chart.name }
   has_many :statistics, :through => :scalings, :source => :statistic, :conditions => { "scalings.scalable_type" => Statistic.name }
   
+  list_by :position
+  
   # TODO: improve the way the scales work?
   
   serialize :config, Hash

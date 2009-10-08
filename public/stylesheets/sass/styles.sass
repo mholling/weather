@@ -2,11 +2,17 @@
 
 body
   margin: auto
-  .charts .scaling
-    :width 900px
-    :height 180px
-  .statistics .scaling
-    :width 100px
-    :height 50px
-    :border 1px solid gray
-    :margin 10px
+  .scalings
+    .chart
+      .plot
+        :width 900px
+        :height 180px
+    .statistic
+      .summary
+        :width 100px
+        :height 50px
+        :border 1px solid gray
+        :margin 10px
+    .scaling
+      .handle
+        :cursor move

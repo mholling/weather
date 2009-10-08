@@ -7,11 +7,9 @@ class ScalingsController < ApplicationController
     end
   end
   
-  def show
-    @scaling = Scaling.find(params[:id])
-    date = Date.parse(params[:date])
-    respond_to do |format|
-      format.json { render :json => { "data" => @scaling.data(date), "options" => @scaling.options(date) } }
-    end
+  def update
+    # Rails.logger.info "got params:\n#{params.inspect}\n"
+    @scaling = Scaling.find(params[:id]).update_attributes(:position => params[:position])
+    render :nothing => true
   end
 end
