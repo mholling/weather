@@ -13,13 +13,19 @@
   %ul.scales
     - @scalings.group_by(&:scale).sort_by(&:first).each do |scale, scalings|
       %li[scale]
-        %ul.charts.scalings
-          - scalings.select { |scaling| scaling.scalable_type == Chart.name }.each do |scaling|
-            %li.chart[scaling]
-              %div.handle drag!
-              %div.content
         %ul.statistics.scalings
           - scalings.select { |scaling| scaling.scalable_type == Statistic.name }.each do |scaling|
             %li.statistic[scaling]
-              %div.handle drag!
-              %div.content
+              %a.show{ :href => scaling_statistic_path(scaling) }
+              %a.move{ :href => scaling_path(scaling) }<
+              .handle
+              .container
+                .content
+        %ul.charts.scalings
+          - scalings.select { |scaling| scaling.scalable_type == Chart.name }.each do |scaling|
+            %li.chart[scaling]
+              %a.show{ :href => scaling_chart_path(scaling) }<
+              %a.move{ :href => scaling_path(scaling) }<
+              .handle
+              .container
+                .content

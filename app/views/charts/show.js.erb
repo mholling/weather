@@ -1,0 +1,83 @@
+<%= dom_id(@scaling) %> = {
+  data: <%= @scaling.data(@date).to_json %>,
+  
+  options: $.extend(true, <%= @scaling.options(@date).to_json %>, {
+    yaxis: {
+      tickFormatter: function(value, axis) {
+        return value + '<%= @scaling.chart.config["units"] %>'
+      }
+    }
+  }),
+  
+  content: $("#<%= dom_id(@scaling) %> .content"),
+  
+  plot: function(options) {
+    this.content.html('<%= escape_javascript(render @scaling.chart.becomes(Chart)) %>')
+    opts = $.extend(true, {}, this.options, options);
+    $.plot(this.content.children('.plot'), this.data, opts);    
+  },
+  
+  draw: function() {
+    this.plot({})
+  },
+  
+  zoom: function(ranges) {
+    this.plot({
+      xaxis: {
+        min: ranges.xaxis.from,
+        max: ranges.xaxis.to
+      }
+    });
+  },
+  
+  hover: {
+    seriesIndex: null,
+    dataIndex: null,
+    
+    show: function(item) {
+      if (item) {
+        if (this.seriesIndex != item.seriesIndex || this.dataIndex != item.dataIndex) {
+          $('#tooltip').remove();
+          this.seriesIndex = item.seriesIndex;
+          this.dataIndex = item.dataIndex;
+          for (values = [], n = 1; n < <%= dom_id(@scaling) %>.data[item.seriesIndex][0].length; n++) {
+            values.push(<%= dom_id(@scaling) %>.options.yaxis.tickFormatter(item.datapoint[n].toFixed(1)));
+          };
+          $('<div id="tooltip">' + values.join('<br>') + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: item.pageY - 35,
+            left: item.pageX + 5,
+            padding: '5px',
+            'background-color': '#ff4',
+            opacity: 0.80
+          }).appendTo('body').fadeIn(200);
+        };
+      } else {
+        this.seriesIndex = null;
+        this.dataIndex = null;
+        $('#tooltip').remove();
+      };
+    }
+  },
+  
+  init: function() {
+    this.content.unbind();
+    this.content.bind('plotselected', function(event, ranges) {
+      <%- @scaling.scale.scalings.for(Chart).each do |scaling| -%>
+        <%= dom_id(scaling) %>.zoom(ranges);
+      <%- end -%>
+    });
+    this.content.bind('plotunselected', function(event) {
+      <%- @scaling.scale.scalings.for(Chart).each do |scaling| -%>
+        <%= dom_id(scaling) %>.draw();
+      <%- end -%>
+    });
+    this.content.bind('plothover', function(event, position, item) {
+      <%= dom_id(@scaling) %>.hover.show(item);
+    });
+    this.draw();
+  }
+}
+
+<%= dom_id(@scaling) %>.init();

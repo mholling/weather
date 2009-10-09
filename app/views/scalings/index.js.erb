@@ -11,9 +11,6 @@ var app = {
     this.date.init();
     this.tabs.init();
     this.scalings.init();
-    this.zoom.init();
-    this.hover.init();
-    this.spinners.init();
     this.sortable.init();
   },
   
@@ -45,12 +42,10 @@ var app = {
   tabs: {
     init: function() {
       $('#tabs').tabs({
-        select: app.tabs.selected
+        select: function(event, ui) {
+          app.scalings.loadScale(ui.index)
+        }
       });
-    },
-    
-    selected: function(event, ui) {
-      app.scalings.loadScale(ui.index);
     },
     
     selectedTab: function() {
@@ -59,142 +54,29 @@ var app = {
   },
   
   scalings: {
-    <%- @scalings.group_by(&:scalable_type).each do |scalable_type, scalings| -%>
-      <%- scalings.each do |scaling| -%>
-        <%= dom_id(scaling) %>: {
-          url: '<%= scaling_path(scaling) %>',
-          scalable: {
-            url: '<%= send "scaling_#{scalable_type.underscore}_path", scaling, :format => :json %>',
-            response: null,
-            
-            <%- if scalable_type == Chart.name -%>
-              tickFormatter: function(value, axis) {
-                return value + '<%= scaling.chart.config["units"] %>'
-              }
-            <%- end -%>
-          }
-        },
-      <%- end -%>
-    <%- end -%>
-
     init: function() {
     },
 
     reset: function() {
-      <%- @scalings.each do |scaling| -%>
-        app.scalings.<%= dom_id(scaling) %>.scalable.response = null;
-      <%- end -%>
+      $('.scaling .content').empty();
       this.loadScale(app.tabs.selectedTab());
     },
 
     loadScale: function(tabIndex) {
-      this.load($('.scale:eq('+tabIndex+') .scaling'));
+      this.load($('.scale:eq('+tabIndex+') .scaling .content:empty').parents('.scaling'));
     },
     
     load: function(scalings) {
-      scalings.each(function(index, scaling) {
-        if (app.scalings[scaling.id].scalable.response == null) {
-          $(scaling).children('.content').empty();
-          url = app.scalings[scaling.id].scalable.url+'?date='+encodeURI(app.date.string());
-          jQuery.getJSON(url, function(result) {
-            app.scalings[scaling.id].scalable.response = result;
-            app.scalings.render(scaling);
-          });
-        };
-      });
-    },
-          
-    render: function(scaling, options) {
-      if ($(scaling).is('.chart')) {
-        opts = $.extend(true, {}, app.scalings[scaling.id].scalable.response.options);
-        opts = $.extend(true, opts, options || {});
-        opts = $.extend(true, opts, {
-          yaxis: {
-            tickFormatter: app.scalings[scaling.id].scalable.tickFormatter
-          }
-        });
-        $.plot($(scaling).find('.content'), app.scalings[scaling.id].scalable.response.data, opts);
-      } else {
-        $(scaling).find('.content').html(app.scalings[scaling.id].scalable.response.message)
-      }
-    }
-  },
-  
-  zoom: {
-    init: function() {
-      $('.scaling.chart').bind('plotselected', function(event, ranges) {
-        app.zoom.render($(event.target).parents('.scale').find('.scaling.chart'), ranges);
-      });
-      $('.scaling.chart').bind('plotunselected', function(event) {
-        $(event.target).parents('.scale').find('.scaling.chart').each(function(index, scaling) {          
-          app.scalings.render(scaling);
-        })
-      });
-    },
-  
-    render: function(scalings, ranges) {
-      scalings.each(function(index, scaling) {
-        app.scalings.render(scaling, {
-          xaxis: {
-            min: ranges.xaxis.from,
-            max: ranges.xaxis.to
-          }
-        });          
+      scalings.find('.content').css("background", "url(/images/ajax-loader.gif) center no-repeat")
+      scalings.find('a.show').each(function(index, anchor) {
+        data = { date: app.date.string() };
+        jQuery.get(anchor.href, data, function() {
+          $(anchor).parents('.scaling').find('.content').css("background", "none")
+        }, 'script');
       });
     }
   },
 
-  hover: {
-    dataIndex: null,
-    seriesIndex: null,
-
-    init: function() {        
-      $('.scaling.chart').bind('plothover', function(event, position, item) {
-        app.hover.show($(event.target).parents('.scaling').get(0), item);
-      });
-    },
-
-    show: function(scaling, item) {
-      if (item) {
-        if (this.dataIndex != item.dataIndex || this.seriesIndex != item.seriesIndex) {
-          this.dataIndex = item.dataIndex;
-          this.seriesIndex = item.seriesIndex;
-          this.showToolTip(scaling, item);
-        };
-      } else {
-        this.dataIndex = null;
-        this.seriesIndex = null;
-        this.hideToolTip();
-      };
-    },
-
-    showToolTip: function(scaling, item) {
-      for (values = [], n = 1; n < app.scalings[scaling.id].scalable.response.data[item.seriesIndex][0].length; n++) {
-        values.push(app.scalings[scaling.id].scalable.tickFormatter(item.datapoint[n].toFixed(1)));
-      };
-      this.hideToolTip();
-      $('<div id="tooltip">' + values.join('<br>') + '</div>').css( {
-        position: 'absolute',
-        display: 'none',
-        top: item.pageY - 35,
-        left: item.pageX + 5,
-        padding: '5px',
-        'background-color': '#ff4',
-        opacity: 0.80
-      }).appendTo('body').fadeIn(200);
-    },
-
-    hideToolTip: function() {
-      $('#tooltip').remove();
-    }
-  },
-    
-  spinners: {
-    init: function() {
-      
-    }
-  },
-    
   sortable: {
     init: function() {
       $('.scalings').sortable({
@@ -202,15 +84,14 @@ var app = {
         placeholder: 'ui-state-highlight',
         forcePlaceholderSize: true,
         update: function(event, ui) {
-          url = app.scalings[ui.item[0].id].url;
           data = {
             _method: 'PUT',
-            position: ui.item.parents('.scalings').find('.scaling').index(ui.item)
+            position: $(event.target).find('.scaling').index(ui.item)
           };
-          $.post(url, data);          
+          $.post(ui.item.find('a.move').get(0).href, data);          
         }
       });
-      $('.scalings').disableSelection();
+      $('.scalings .handle').disableSelection();
     }
   }
 };
@@ -218,3 +99,231 @@ var app = {
 $(function() {
   app.init();
 })
+
+
+
+
+
+
+
+
+// $.extend({
+//   keys: function(obj) {
+//     var a = [];
+//     $.each(obj, function(k){ a.push(k) });
+//     return a;
+//   }
+// });
+// 
+// var app = {
+//   init: function() {
+//     this.date.init();
+//     this.tabs.init();
+//     this.scalings.init();
+//     this.zoom.init();
+//     this.hover.init();
+//     this.spinners.init();
+//     this.sortable.init();
+//   },
+//   
+//   date: {
+//     init: function() {
+//       jQuery.getJSON('<%= observation_range_path(:format => :json) %>', function(range) {
+//         options = {
+//           changeMonth: true,
+//           changeYear: true,
+//           firstDay: 1,
+//           minDate: new Date(range.minDate),
+//           maxDate: new Date(range.maxDate),
+//           onSelect: app.date.changed
+//         };
+//         $('#date').datepicker(options);
+//         app.date.changed();
+//       });
+//     },
+//     
+//     changed: function(dateText, inst) {
+//       app.scalings.reset();
+//     },
+//     
+//     string: function() {
+//       return $('#date').datepicker('getDate').toDateString();
+//     }
+//   },
+//   
+//   tabs: {
+//     init: function() {
+//       $('#tabs').tabs({
+//         select: app.tabs.selected
+//       });
+//     },
+//     
+//     selected: function(event, ui) {
+//       app.scalings.loadScale(ui.index);
+//     },
+//     
+//     selectedTab: function() {
+//       return $('#tabs').tabs('option', 'selected');
+//     }
+//   },
+//   
+//   scalings: {
+//     <%- @scalings.group_by(&:scalable_type).each do |scalable_type, scalings| -%>
+//       <%- scalings.each do |scaling| -%>
+//         <%= dom_id(scaling) %>: {
+//           position_url: '<%= scaling_path(scaling) %>',
+//           load_url: '<%= send "scaling_#{scalable_type.underscore}_path", scaling %>',
+//           <%- if scalable_type == Chart.name -%>
+//             tickFormatter: function(value, axis) {
+//               return value + '<%= scaling.chart.config["units"] %>'
+//             }
+//           <%- end -%>
+//         },
+//       <%- end -%>
+//     <%- end -%>
+// 
+//     init: function() {
+//     },
+// 
+//     reset: function() {
+//       <%- @scalings.each do |scaling| -%>
+//         app.scalings.<%= dom_id(scaling) %>.scalable.loaded = false;
+//       <%- end -%>
+//       this.loadScale(app.tabs.selectedTab());
+//     },
+// 
+//     loadScale: function(tabIndex) {
+//       this.load($('.scale:eq('+tabIndex+') .scaling'));
+//     },
+//     
+//     load: function(scalings) {
+//       scalings.each(function(index, scaling) {
+//         if (app.scalings[scaling.id].scalable.loaded == false) {
+//           $(scaling).children('.content').empty();
+//           url = app.scalings[scaling.id].scalable.url
+//           data = { date: app.date.string() };
+//           jQuery.get(url, data, function() {
+//             app.scalings[scaling.id].scalable.loaded = true;
+//           }, 'script');
+//           // jQuery.getJSON(url, function(result) {
+//           //   app.scalings[scaling.id].scalable.response = result;
+//           //   app.scalings.render(scaling);
+//           // });
+//         };
+//       });
+//     },
+//           
+//     render: function(scaling, options) {
+//       if ($(scaling).is('.chart')) {
+//         opts = $.extend(true, {}, app.scalings[scaling.id].scalable.response.options);
+//         opts = $.extend(true, opts, options || {});
+//         opts = $.extend(true, opts, {
+//           yaxis: {
+//             tickFormatter: app.scalings[scaling.id].scalable.tickFormatter
+//           }
+//         });
+//         $.plot($(scaling).find('.content'), app.scalings[scaling.id].scalable.response.data, opts);
+//       } else {
+//         $(scaling).find('.content').html(app.scalings[scaling.id].scalable.response.message)
+//       }
+//     }
+//   },
+//   
+//   zoom: {
+//     init: function() {
+//       $('.scaling.chart').bind('plotselected', function(event, ranges) {
+//         app.zoom.render($(event.target).parents('.scale').find('.scaling.chart'), ranges);
+//       });
+//       $('.scaling.chart').bind('plotunselected', function(event) {
+//         $(event.target).parents('.scale').find('.scaling.chart').each(function(index, scaling) {          
+//           app.scalings.render(scaling);
+//         })
+//       });
+//     },
+//   
+//     render: function(scalings, ranges) {
+//       scalings.each(function(index, scaling) {
+//         app.scalings.render(scaling, {
+//           xaxis: {
+//             min: ranges.xaxis.from,
+//             max: ranges.xaxis.to
+//           }
+//         });          
+//       });
+//     }
+//   },
+// 
+//   hover: {
+//     dataIndex: null,
+//     seriesIndex: null,
+// 
+//     init: function() {        
+//       $('.scaling.chart').bind('plothover', function(event, position, item) {
+//         app.hover.show($(event.target).parents('.scaling').get(0), item);
+//       });
+//     },
+// 
+//     show: function(scaling, item) {
+//       if (item) {
+//         if (this.dataIndex != item.dataIndex || this.seriesIndex != item.seriesIndex) {
+//           this.dataIndex = item.dataIndex;
+//           this.seriesIndex = item.seriesIndex;
+//           this.showToolTip(scaling, item);
+//         };
+//       } else {
+//         this.dataIndex = null;
+//         this.seriesIndex = null;
+//         this.hideToolTip();
+//       };
+//     },
+// 
+//     showToolTip: function(scaling, item) {
+//       for (values = [], n = 1; n < app.scalings[scaling.id].scalable.response.data[item.seriesIndex][0].length; n++) {
+//         values.push(app.scalings[scaling.id].scalable.tickFormatter(item.datapoint[n].toFixed(1)));
+//       };
+//       this.hideToolTip();
+//       $('<div id="tooltip">' + values.join('<br>') + '</div>').css( {
+//         position: 'absolute',
+//         display: 'none',
+//         top: item.pageY - 35,
+//         left: item.pageX + 5,
+//         padding: '5px',
+//         'background-color': '#ff4',
+//         opacity: 0.80
+//       }).appendTo('body').fadeIn(200);
+//     },
+// 
+//     hideToolTip: function() {
+//       $('#tooltip').remove();
+//     }
+//   },
+//     
+//   spinners: {
+//     init: function() {
+//       
+//     }
+//   },
+//     
+//   sortable: {
+//     init: function() {
+//       $('.scalings').sortable({
+//         handle: '.handle',
+//         placeholder: 'ui-state-highlight',
+//         forcePlaceholderSize: true,
+//         update: function(event, ui) {
+//           url = app.scalings[ui.item[0].id].url;
+//           data = {
+//             _method: 'PUT',
+//             position: ui.item.parents('.scalings').find('.scaling').index(ui.item)
+//           };
+//           $.post(url, data);          
+//         }
+//       });
+//       $('.scalings').disableSelection();
+//     }
+//   }
+// };
+// 
+// $(function() {
+//   app.init();
+// })

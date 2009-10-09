@@ -8,7 +8,6 @@ class ScalingsController < ApplicationController
   end
   
   def update
-    # Rails.logger.info "got params:\n#{params.inspect}\n"
     @scaling = Scaling.find(params[:id]).update_attributes(:position => params[:position])
     render :nothing => true
   end
