@@ -1,7 +1,7 @@
 <%= dom_id(@scaling) %> = {
   data: <%= @scaling.data(@date).to_json %>,
   
-  options: $.extend(true, <%= @scaling.options(@date).to_json %>, {
+  options: $.extend(true, <%= @scaling.options_for(@date).to_json %>, {
     yaxis: {
       tickFormatter: function(value, axis) {
         return value + '<%= @scaling.chart.config["units"] %>'

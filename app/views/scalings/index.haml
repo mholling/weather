@@ -4,28 +4,31 @@
   = javascript_include_tag "jquery-ui-1.7.2.custom.min"
   = javascript_include_tag "jquery.flot"
   %script{:type => "text/javascript", :src => scalings_path(:format => :js)}
-#date
 #tabs
-  %ul
+  %ul.tabs
     - @scalings.group_by(&:scale).sort_by(&:first).each do |scale, scalings|
       %li
         %a{:href => "##{dom_id(scale)}"}= scale.name.titleize
   %ul.scales
     - @scalings.group_by(&:scale).sort_by(&:first).each do |scale, scalings|
       %li[scale]
-        %ul.statistics.scalings
-          - scalings.select { |scaling| scaling.scalable_type == Statistic.name }.each do |scaling|
-            %li.statistic[scaling]
-              %a.show{ :href => scaling_statistic_path(scaling) }
-              %a.move{ :href => scaling_path(scaling) }<
-              .handle
-              .container
-                .content
-        %ul.charts.scalings
-          - scalings.select { |scaling| scaling.scalable_type == Chart.name }.each do |scaling|
-            %li.chart[scaling]
-              %a.show{ :href => scaling_chart_path(scaling) }<
-              %a.move{ :href => scaling_path(scaling) }<
-              .handle
-              .container
-                .content
+        %a.show{ :href => scale_path(scale) }
+        .column.left
+          .date
+          %ul.statistics.scalings
+            - scalings.select { |scaling| scaling.scalable_type == Statistic.name }.each do |scaling|
+              %li.statistic[scaling]
+                %a.show{ :href => scaling_statistic_path(scaling) }
+                %a.move{ :href => scaling_path(scaling) }<
+                .handle
+                .container
+                  .content
+        .column.right
+          %ul.charts.scalings
+            - scalings.select { |scaling| scaling.scalable_type == Chart.name }.each do |scaling|
+              %li.chart[scaling]
+                %a.show{ :href => scaling_chart_path(scaling) }<
+                %a.move{ :href => scaling_path(scaling) }<
+                .handle
+                .container
+                  .content

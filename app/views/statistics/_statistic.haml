@@ -1,1 +1,1 @@
-= "#{@statistic.name}: %.1f#{@statistic.config['units']}" % @statistic.value(10.days.ago..Time.now)
+= "#{@statistic.name}: %.1f#{@statistic.config['units']}" % @statistic.value(@scaling.scale.interval_for(@date))

@@ -5,7 +5,6 @@ class ChartsController < ApplicationController
     @date = Date.parse(params[:date])
     respond_to do |format|
       format.js { render :layout => false }
-      # format.json { render :json => { "data" => @scaling.data(date), "options" => @scaling.options(date) } }
     end
   end
 end

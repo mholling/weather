@@ -1,0 +1,80 @@
+<%- first_time = Observation.chronological.first.time.send("end_of_#{@scale.units.singularize}") -%>
+<%- last_time = Observation.chronological.last.time.send("end_of_#{@scale.units.singularize}") -%>
+
+container = $('#<%= dom_id(@scale) %> .date'),
+container.html('<%= escape_javascript(render @scale)%>');
+
+for (year = <%= first_time.year %>; year <= <%= last_time.year %>; year++) {
+  container.find('.year').append('<option value="'+year+'">'+year+'</option>');
+};
+
+<%- case @scale.units -%>
+<%- when "years" -%>
+  container.find('.month').append('<option value="0"></option>');
+  container.find('.day').append('<option value="1"></option>');
+  container.find('.month, .day').hide();
+<%- when "months" -%>
+  container.find('.day').append('<option value="1"></option>');
+  container.find('.day').hide();
+<%- end -%>
+
+container.find('.year').change(function(event) {
+  container = $(this).parents('.date');
+  <%- unless @scale.units == "years" -%>
+    monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    year = $(this).find('option:selected').get(0).value;
+    container.find('.month').empty();
+    for (month = 0; month < 12; month++) {
+      if (year > <%= first_time.year %> || month >= <%= first_time.month - 1 %>) {
+        if (year < <%= last_time.year %> || month <= <%= last_time.month - 1 %>) {
+          container.find('.month').append('<option value="'+month+'">'+monthNames[month]+'</option>');
+        };
+      };
+    };
+  <%- end -%>
+  container.find('.month').change();
+});
+
+container.find('.month').change(function(event) {
+  container = $(this).parents('.date');
+  year = container.find('.year option:selected').get(0).value;
+  month = container.find('.month option:selected').get(0).value;
+  <%- case @scale.units -%>
+  <%- when "days" -%>
+    container.find('.day').empty();
+    for (day = 1; day <= 31; day++) {
+      if (year > <%= first_time.year %> || month > <%= first_time.month - 1 %> || day >= <%= first_time.day %>) {
+        if (year < <%= last_time.year %> || month < <%= last_time.month - 1 %> || day <= <%= last_time.day %>) {
+          if ((new Date(year, month, day)).getMonth() == month) {
+            container.find('.day').append('<option value="'+day+'">'+day+'</option>');
+          };
+        };
+      };
+    };
+  <%- when "weeks" -%>
+    container.find('.day').empty();
+    for (day = 1; day <= 31; day++) {
+      date = new Date(year, month, day)
+      if (date.getMonth() == month && date.getDay() == 0) {
+        if (date.getFullYear() > <%= first_time.year %> || date.getMonth() > <%= first_time.month - 1 %> || date.getDate() >= <%= first_time.day %>) {
+          if (date.getFullYear() < <%= last_time.year %> || date.getMonth() < <%= last_time.month - 1 %> || date.getDate() <= <%= last_time.day %>) {
+            container.find('.day').append('<option value="'+date.getDate()+'">'+date.getDate()+'</option>');
+          };
+        };
+      };
+    };
+  <%- end -%>
+  container.find('.day').change();
+});
+
+container.find('.day').change(function(event) {
+  container = $(this).parents('.date');
+  year = container.find('.year option:selected').get(0).value;
+  month = container.find('.month option:selected').get(0).value;
+  day = container.find('.day option:selected').get(0).value;
+  container.data('date', new Date(year, month, day))
+  $(this).parents('.scale').find('.scaling .content').empty();
+  app.scalings.loadScale(app.tabs.selectedTab());
+});
+
+container.find('.year').change();

@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20091008020321) do
+ActiveRecord::Schema.define(:version => 20091009231610) do
 
   create_table "chartings", :force => true do |t|
     t.integer  "chart_id"
@@ -63,6 +63,8 @@ ActiveRecord::Schema.define(:version => 20091008020321) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "position"
+    t.integer  "interval"
+    t.string   "units"
   end
 
   create_table "scalings", :force => true do |t|
