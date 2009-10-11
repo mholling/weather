@@ -12,7 +12,7 @@ class Observation < ActiveRecord::Base
   before_validation :set_meteorological_date
     
   def set_meteorological_date
-    self.meteorological_date = Observation.time.to_meteorological_date if time
+    self.meteorological_date = time.to_meteorological_date if time
   end
   
   class << self
