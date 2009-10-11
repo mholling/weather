@@ -1,10 +1,10 @@
-<%- first_time = Observation.chronological.first.time.send("end_of_#{@scale.units.singularize}") -%>
-<%- last_time = Observation.chronological.last.time.send("end_of_#{@scale.units.singularize}") -%>
+<%- first_date = Observation.chronological.first.meteorological_date.send("end_of_#{@scale.units.singularize}").to_date -%>
+<%- last_date = Observation.chronological.last.meteorological_date.send("end_of_#{@scale.units.singularize}").to_date -%>
 
 container = $('#<%= dom_id(@scale) %> .date'),
 container.html('<%= escape_javascript(render @scale)%>');
 
-for (year = <%= first_time.year %>; year <= <%= last_time.year %>; year++) {
+for (year = <%= first_date.year %>; year <= <%= last_date.year %>; year++) {
   container.find('.year').append('<option value="'+year+'">'+year+'</option>');
 };
 
@@ -25,8 +25,8 @@ container.find('.year').change(function(event) {
     year = $(this).find('option:selected').get(0).value;
     container.find('.month').empty();
     for (month = 0; month < 12; month++) {
-      if (year > <%= first_time.year %> || month >= <%= first_time.month - 1 %>) {
-        if (year < <%= last_time.year %> || month <= <%= last_time.month - 1 %>) {
+      if (year > <%= first_date.year %> || month >= <%= first_date.month - 1 %>) {
+        if (year < <%= last_date.year %> || month <= <%= last_date.month - 1 %>) {
           container.find('.month').append('<option value="'+month+'">'+monthNames[month]+'</option>');
         };
       };
@@ -43,8 +43,8 @@ container.find('.month').change(function(event) {
   <%- when "days" -%>
     container.find('.day').empty();
     for (day = 1; day <= 31; day++) {
-      if (year > <%= first_time.year %> || month > <%= first_time.month - 1 %> || day >= <%= first_time.day %>) {
-        if (year < <%= last_time.year %> || month < <%= last_time.month - 1 %> || day <= <%= last_time.day %>) {
+      if (year > <%= first_date.year %> || month > <%= first_date.month - 1 %> || day >= <%= first_date.day %>) {
+        if (year < <%= last_date.year %> || month < <%= last_date.month - 1 %> || day <= <%= last_date.day %>) {
           if ((new Date(year, month, day)).getMonth() == month) {
             container.find('.day').append('<option value="'+day+'">'+day+'</option>');
           };
@@ -56,8 +56,8 @@ container.find('.month').change(function(event) {
     for (day = 1; day <= 31; day++) {
       date = new Date(year, month, day)
       if (date.getMonth() == month && date.getDay() == 0) {
-        if (date.getFullYear() > <%= first_time.year %> || date.getMonth() > <%= first_time.month - 1 %> || date.getDate() >= <%= first_time.day %>) {
-          if (date.getFullYear() < <%= last_time.year %> || date.getMonth() < <%= last_time.month - 1 %> || date.getDate() <= <%= last_time.day %>) {
+        if (date.getFullYear() > <%= first_date.year %> || date.getMonth() > <%= first_date.month - 1 %> || date.getDate() >= <%= first_date.day %>) {
+          if (date.getFullYear() < <%= last_date.year %> || date.getMonth() < <%= last_date.month - 1 %> || date.getDate() <= <%= last_date.day %>) {
             container.find('.day').append('<option value="'+date.getDate()+'">'+date.getDate()+'</option>');
           };
         };

@@ -1,4 +1,5 @@
 require File.join(Rails.root, 'lib/hash')
 require File.join(Rails.root, 'lib/range')
-require File.join(Rails.root, 'lib/time')
+require File.join(Rails.root, 'lib/javascript_time')
+require File.join(Rails.root, 'lib/meteorological_date')
 require File.join(Rails.root, 'lib/list_by')

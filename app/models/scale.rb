@@ -8,8 +8,6 @@ class Scale < ActiveRecord::Base
   
   list_by :position
   
-  # TODO: improve the way the scales work?
-  
   serialize :config, Hash
   
   def after_initialize
@@ -17,13 +15,16 @@ class Scale < ActiveRecord::Base
   end
   
   def interval_for(date)
-    finish = date.to_time.send("end_of_#{units.singularize}")
-    start = (finish + 1.second) - interval.send(units.pluralize)
+    finish = date.send("end_of_#{units.singularize}").to_date
+    start = finish - interval.send(units.pluralize) + 1.day
     (start..finish)
   end
   
   def options_for(date)
-    date_options = { "xaxis" => { "min" => interval_for(date).begin.to_js, "max" => interval_for(date).end.to_js } }
+    # date_options = { "xaxis" => { "min" => interval_for(date).begin.to_js, "max" => interval_for(date).end.to_js } }
+    date_options = { "xaxis" => { "min" => interval_for(date).begin.beginning_of_meteorological_day.to_js, "max" => interval_for(date).end.end_of_meteorological_day.to_js } }
+    # TODO: this is good for the daily and weekly charts, but not quite right for the monthly/yearly charts...
+    # (fix by setting those charts to return start of met. day instead of midnight?)
     self.class.options.deep_merge(config["flot"] || {}).deep_merge(date_options)
   end
   

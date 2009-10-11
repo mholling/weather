@@ -1,18 +1,14 @@
 class RainfallChart < Chart
   def data(interval)
-    observations = instrument.observations.with_value.chronological.during(interval)
-    finish = [ interval.end, Time.zone.now ].min
-    series = if observations.any?
-      observations.inject([ 0.0, [ [ interval.begin.to_js, 0.0 ] ] ]) do |(sum, points), observation|
-        points << [ observation.time.to_js, sum ]
-        sum += observation.value
-        points << [ observation.time.to_js, sum ]
-        [ sum, points ]
-      end.last << [ finish.to_js, observations.sum(:value) ]
-    else
-      [ [ interval.begin.to_js, 0.0 ], [ finish.to_js, 0.0 ] ]
+    observations = instrument.observations.chronological.with_value.with_meteorological_date(interval)
+    series = [ [ interval.begin.beginning_of_meteorological_day.to_js, 0.0 ] ]
+    total = observations.inject(0.0) do |sum, observation|
+      series << [ observation.time.to_js, sum ]
+      sum += observation.value
+      series << [ observation.time.to_js, sum ]
+      sum
     end
+    series << [ [ interval.end.end_of_meteorological_day, Time.zone.now ].min.to_js, total ]
     [ series ]
   end
-
 end

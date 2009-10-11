@@ -1,6 +1,4 @@
 class Observation < ActiveRecord::Base
-  extend MeteorologicalDay
-
   belongs_to :instrument
   
   validates_presence_of :instrument
@@ -8,13 +6,13 @@ class Observation < ActiveRecord::Base
   validates_presence_of :meteorological_date
   
   named_scope :chronological, :order => :time
-  named_scope :during, lambda { |interval| { :conditions => { :time => interval.utc } } }
+  named_scope :with_meteorological_date, lambda { |dates| { :conditions => { :meteorological_date => dates } } }
   named_scope :with_value, :conditions => [ "value IS NOT :nil", { :nil => nil } ]
   
   before_validation :set_meteorological_date
     
   def set_meteorological_date
-    self.meteorological_date = Observation.meteorological_date_for(time) if time
+    self.meteorological_date = Observation.time.to_meteorological_date if time
   end
   
   class << self

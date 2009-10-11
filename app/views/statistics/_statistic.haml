@@ -1,1 +1,4 @@
-= "#{@statistic.name}: %.1f#{@statistic.config['units']}" % @statistic.value(@scaling.scale.interval_for(@date))
+- if value = @statistic.value(@scaling.scale.interval_for(@date))
+  = "#{@statistic.name}: %.1f#{@statistic.config['units']}" % value
+- else
+  = "#{@statistic.name}: (no data)"
