@@ -6,10 +6,6 @@ var dateSelect = {
   
   init: function() {
     this.container.html('<%= escape_javascript(render @scale)%>');
-    this.container.find('.year').change();
-    this.fillYears();
-    this.fillMonths();
-    this.fillDays();
     
     this.container.find('.year').bind('change', this, function(event) {
       event.data.fillMonths();
@@ -57,6 +53,13 @@ var dateSelect = {
       }
       event.data.container.find('.day').change();
     });
+
+    this.fillYears();
+    this.container.find('.year option:last-child').attr('selected', 'selected');
+    this.fillMonths();
+    this.container.find('.month option:last-child').attr('selected', 'selected');
+    this.fillDays();
+    this.container.find('.day option:last-child').attr('selected', 'selected');
     
     this.container.find('.day').change();
   },
