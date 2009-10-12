@@ -53,15 +53,27 @@ var dateSelect = {
       }
       event.data.container.find('.day').change();
     });
+    
+    this.container.find('.last').bind('click', this, function(event) {
+      event.data.selectLastDate();
+      event.data.container.find('.day').change();
+    });
 
+    this.selectLastDate();
+    this.container.find('.day').change();
+    
+    $('#<%= dom_id(@scale) %> .refresh').bind('click', this, function(event) {
+      event.data.container.find('.day').change();
+    });
+  },
+  
+  selectLastDate: function() {
     this.fillYears();
     this.container.find('.year option:last-child').attr('selected', 'selected');
     this.fillMonths();
     this.container.find('.month option:last-child').attr('selected', 'selected');
     this.fillDays();
     this.container.find('.day option:last-child').attr('selected', 'selected');
-    
-    this.container.find('.day').change();
   },
   
   fillYears: function() {
@@ -124,7 +136,7 @@ var dateSelect = {
   },
   
   enablePrevNext: function() {
-    this.container.find('.next').attr('disabled', this.container.find('select option:selected:not(:last-child)').any() ? '' : 'disabled');
+    this.container.find('.next, .last').attr('disabled', this.container.find('select option:selected:not(:last-child)').any() ? '' : 'disabled');
     this.container.find('.prev').attr('disabled', this.container.find('select option:selected:not(:first-child)').any() ? '' : 'disabled');
   }
 }

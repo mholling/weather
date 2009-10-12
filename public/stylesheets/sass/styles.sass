@@ -9,14 +9,25 @@
     :vertical-align top
     :margin 10px
     &.left
-      :width 330px
+      :width 400px
     &.right
-      :width 850px
-    .date
-      :margin 10px
+      :width 800px
+    .date, .refresh
+      :display inline-block
       :text-align left
+      :margin-top 5px
+      :margin-bottom 10px
       :min-height 1em
+    .date
+      :float left
+    .refresh
+      :float right
+      img
+        :cursor pointer
+        :width 25px
+        :height 25px
     .scalings
+      :clear both
       .scaling
         :width 100%
         .handle

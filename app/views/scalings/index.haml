@@ -15,6 +15,8 @@
         %a.show{ :href => scale_path(scale) }
         .column.left
           .date
+          .refresh
+            %img{:src => '/images/refresh.png'}
           %ul.statistics.scalings
             - scalings.select { |scaling| scaling.scalable_type == Statistic.name }.each do |scaling|
               %li.statistic[scaling]
