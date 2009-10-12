@@ -116,4 +116,5 @@ input[type="checkbox"], input[type="radio"] {
         padding: 5px 25px; }
       .scale .column .scalings .statistic .content {
         width: 100%;
-        min-height: 1em; }
+        min-height: 1.2em;
+        text-align: left; }

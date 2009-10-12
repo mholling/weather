@@ -7,6 +7,7 @@ container.html('<%= escape_javascript(render @scale)%>');
 for (year = <%= first_date.year %>; year <= <%= last_date.year %>; year++) {
   container.find('.year').append('<option value="'+year+'">'+year+'</option>');
 };
+container.find('.year option:last').attr('selected', 'selected');
 
 <%- case @scale.units -%>
 <%- when "years" -%>
@@ -32,6 +33,7 @@ container.find('.year').change(function(event) {
       };
     };
   <%- end -%>
+  container.find('.month option:last').attr('selected', 'selected');
   container.find('.month').change();
 });
 
@@ -64,6 +66,7 @@ container.find('.month').change(function(event) {
       };
     };
   <%- end -%>
+  container.find('.day option:last').attr('selected', 'selected');
   container.find('.day').change();
 });
 
@@ -73,8 +76,8 @@ container.find('.day').change(function(event) {
   month = container.find('.month option:selected').get(0).value;
   day = container.find('.day option:selected').get(0).value;
   container.data('date', new Date(year, month, day))
-  $(this).parents('.scale').find('.scaling .content').empty();
-  app.scalings.loadScale(app.tabs.selectedTab());
+  $(this).parents('.scale').find('.content').empty();
+  app.scalings.refresh();
 });
 
 container.find('.year').change();

@@ -1,60 +1,35 @@
-$.extend({
-  keys: function(obj) {
-    var a = [];
-    $.each(obj, function(k){ a.push(k) });
-    return a;
-  }
-});
-
 var app = {
   init: function() {
     this.tabs.init();
-    this.scales.init();
-    this.scalings.init();
     this.sortable.init();
   },
   
   tabs: {
     init: function() {
       $('#tabs').tabs({
-        select: function(event, ui) {
-          app.scalings.loadScale(ui.index)
+        show: function(event, ui) {
+          app.scales.refresh();
         }
       });
-    },
-    
-    selectedTab: function() {
-      return $('#tabs').tabs('option', 'selected');
     }
   },
   
   scales: {
-    init: function() {
-      $('.scale .date').data('date', new Date());
-      <%- @scalings.map(&:scale).uniq.each do |scale| -%>
-        $('#<%= dom_id(scale) %>').children('a.show').each(function(index, anchor) {
-          jQuery.get(anchor.href, null, null, 'script');
-        });
-      <%- end -%>
-    },
+    refresh: function(scales) {
+      $('.date:empty').parents('.scale:visible').children('a.show').each(function(index, anchor) {
+        jQuery.get(anchor.href, null, null, 'script');
+      });
+    }
   },
   
   scalings: {
-    init: function() {
-      $('.scaling .content').empty();
-      this.loadScale(app.tabs.selectedTab());
-    },
-    
-    loadScale: function(tabIndex) {
-      this.load($('.scale:eq('+tabIndex+') .scaling .content:empty').parents('.scaling'));
-    },
-    
-    load: function(scalings) {
-      scalings.find('.content').css("background", "url(/images/ajax-loader.gif) center no-repeat")
-      scalings.find('a.show').each(function(index, anchor) {
-        data = { date: scalings.parents('.scale').find('.date').data('date').toDateString() }
+    refresh: function() {
+      new_scalings = $('.content:empty').parents('.scaling:visible');
+      new_scalings.find('.content').css("background", "url(/images/ajax-loader.gif) center no-repeat");
+      new_scalings.find('a.show').each(function(index, anchor) {
+        data = { date: new_scalings.parents('.scale').find('.date').data('date').toDateString() }
         jQuery.get(anchor.href, data, function() {
-          $(anchor).parents('.scaling').find('.content').css("background", "none")
+          $(anchor).parents('.scaling').find('.content').css("background", "none");
         }, 'script');
       });
     }
