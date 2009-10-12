@@ -19,15 +19,13 @@ class Scale < ActiveRecord::Base
     start = finish - interval.send(units.pluralize) + 1.day
     (start..finish)
   end
-  
+
   def options_for(date)
-    # date_options = { "xaxis" => { "min" => interval_for(date).begin.to_js, "max" => interval_for(date).end.to_js } }
-    date_options = { "xaxis" => { "min" => interval_for(date).begin.beginning_of_meteorological_day.to_js, "max" => interval_for(date).end.end_of_meteorological_day.to_js } }
-    # TODO: this is good for the daily and weekly charts, but not quite right for the monthly/yearly charts...
-    # (fix by setting those charts to return start of met. day instead of midnight?)
+    day = config["daily"] ? "day" : "meteorological_day"
+    date_options = { "xaxis" => { "min" => interval_for(date).begin.send("beginning_of_#{day}").to_js, "max" => interval_for(date).end.send("end_of_#{day}").to_js } }
     self.class.options.deep_merge(config["flot"] || {}).deep_merge(date_options)
   end
-  
+    
   def self.config
     APP_CONFIG[name.underscore] || {}
   end
