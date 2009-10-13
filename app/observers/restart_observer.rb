@@ -1,5 +1,5 @@
 class RestartObserver < ActiveRecord::Observer
-  observe :device, :instrument, :chart
+  observe :device, :instrument
   # TODO: does this need to be observing charts? NO!
   
   def after_save(object)
