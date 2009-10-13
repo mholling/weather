@@ -7,7 +7,7 @@
 #tabs
   %ul.tabs
     - @scalings.group_by(&:scale).sort_by(&:first).each do |scale, scalings|
-      %li
+      %li.tab
         %a{:href => "##{dom_id(scale)}"}= scale.name.titleize
   %ul.scales
     - @scalings.group_by(&:scale).sort_by(&:first).each do |scale, scalings|

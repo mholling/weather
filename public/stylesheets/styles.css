@@ -80,7 +80,15 @@ em {
 strong {
   font-weight: bold; }
 
+.tabs {
+  text-align: center !important;
+  margin: auto !important;
+  padding: 0 * !important; }
+  .tabs li.tab {
+    float: left !important; }
+
 .scale {
+  padding: 0 !important;
   text-align: center; }
   .scale .column {
     display: inline-block;
