@@ -25,7 +25,7 @@ var app = {
   },
   
   scales: {
-    refresh: function(scales) {
+    refresh: function() {
       $('.date:empty').parents('.scale:visible').children('a.show').each(function(index, anchor) {
         jQuery.get(anchor.href, null, null, 'script');
       });
@@ -34,9 +34,10 @@ var app = {
   
   scalings: {
     refresh: function() {
-      new_scalings = $('.content:empty').parents('.scaling:visible');
+      new_scalings = $('.content').parents('.scaling:visible');
       new_scalings.find('.content').css("background", "url(/images/ajax-loader.gif) center no-repeat");
       new_scalings.find('a.show').each(function(index, anchor) {
+        // alert(anchor.href)
         data = { date: new_scalings.parents('.scale').find('.date').data('date').toDateString() }
         jQuery.get(anchor.href, data, function() {
           $(anchor).parents('.scaling').find('.content').css("background", "none");

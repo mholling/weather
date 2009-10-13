@@ -74,6 +74,12 @@ pre, code, kbd, samp, tt {
 input[type="checkbox"], input[type="radio"] {
   padding: 1px; }
 
+em {
+  font-style: italic; }
+
+strong {
+  font-weight: bold; }
+
 .scale {
   text-align: center; }
   .scale .column {
@@ -125,8 +131,23 @@ input[type="checkbox"], input[type="radio"] {
       .scale .column .scalings .statistic {
         margin: 5px 0; }
         .scale .column .scalings .statistic .container {
-          padding: 5px 25px; }
+          padding: 5px; }
         .scale .column .scalings .statistic .content {
           width: 100%;
           min-height: 1.2em;
           text-align: left; }
+          .scale .column .scalings .statistic .content .name {
+            display: inline-block;
+            width: 12em;
+            text-align: right;
+            padding-right: 0.2em; }
+          .scale .column .scalings .statistic .content .value {
+            font-weight: bold; }
+            .scale .column .scalings .statistic .content .value.maximum {
+              color: #a00; }
+            .scale .column .scalings .statistic .content .value.minimum {
+              color: #00a; }
+            .scale .column .scalings .statistic .content .value.current {
+              color: black; }
+            .scale .column .scalings .statistic .content .value.total {
+              color: #00a; }

@@ -1,1 +1,3 @@
-$('#<%= dom_id(@scaling) %>').find('.content').html('<%= escape_javascript(render @statistic.becomes(Statistic)) %>')
+$('#<%= dom_id(@scaling) %> .content').html('<%= escape_javascript(render @statistic.becomes(Statistic), :data => @scaling.data(@date)) %>')
+$('#<%= dom_id(@scaling) %> .content:not(:empty)').parents('.container').siblings('.handle').andSelf().show();
+$('#<%= dom_id(@scaling) %> .content:empty').parents('.container').siblings('.handle').andSelf().hide();

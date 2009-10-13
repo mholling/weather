@@ -2,6 +2,11 @@
 
 !border = #ccc
 
+em
+  :font-style italic
+strong
+  :font-weight bold
+
 .scale
   :text-align center
   .column
@@ -53,8 +58,23 @@
       .statistic
         :margin 5px 0
         .container
-          :padding 5px 25px
+          :padding 5px
         .content
           :width 100%
           :min-height 1.2em
           :text-align left
+          .name
+            :display inline-block
+            :width 12em
+            :text-align right
+            :padding-right 0.2em
+          .value
+            :font-weight bold
+            &.maximum
+              :color #a00
+            &.minimum
+              :color #00a
+            &.current
+              :color black
+            &.total
+              :color #00a

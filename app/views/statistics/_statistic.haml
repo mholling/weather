@@ -1,4 +1,15 @@
-- if value = @statistic.value(@scaling.scale.interval_for(@date))
-  = "#{@statistic.name}: %.1f#{@statistic.config['units']}" % value
-- else
-  = "#{@statistic.name}: (no data)"
+- if data
+  %span.name= "#{@statistic.name}:"
+  - case @statistic
+  - when Minimum
+    %span.value.minimum= "#{data.value.round(1)}#{@statistic.config['units']}"
+    at
+    = data.time.strftime('%I:%M %p, %b %d')
+  - when Maximum
+    %span.value.maximum= "#{data.value.round(1)}#{@statistic.config['units']}"
+    at
+    = data.time.strftime('%I:%M %p, %b %d')
+  - when Total
+    %span.value.total= "#{data.round(1)}#{@statistic.config['units']}"
+  - when Current
+    %span.value.current= "#{data.round(1)}#{@statistic.config['units']}"

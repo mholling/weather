@@ -16,6 +16,11 @@ class Scaling < ActiveRecord::Base
   end
   
   def data(date)
-    chart.data(scale.interval_for(date))
+    case scalable
+    when Chart
+      chart.data(scale.interval_for(date))
+    when Statistic
+      statistic.data(scale.interval_for(date))
+    end
   end
 end
