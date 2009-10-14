@@ -83,11 +83,11 @@ class Instrument < ActiveRecord::Base
           instruments.first.observe!
         end
       rescue Errno::ECONNABORTED, Errno::ECONNRESET, Errno::ETIMEDOUT, Errno::ECONNREFUSED
-        Rails.logger.error("owserver down...")
+        Rails.logger.info "#{Time.zone.now} Owserver down."
         until OneWire::Transaction.ping
           sleep APP_CONFIG['interval'] || 60
         end
-        Rails.logger.error("owserver back up!")
+        Rails.logger.info "#{Time.zone.now} Owserver back up."
         instruments.each(&:start!)
         retry
       rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
