@@ -3,6 +3,7 @@ common:
     retries:
       EINVAL: 100
       ENOENT: 10
+  interval: 60
 
   time_zone: Canberra
   start_of_meteorological_day: 9

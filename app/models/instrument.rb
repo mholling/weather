@@ -46,8 +46,9 @@ class Instrument < ActiveRecord::Base
         Rails.logger.info("#{Time.zone.now} #{description.humanize} observed #{value}")
       end
     end
-  rescue SystemCallError => e
+  rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
     Rails.logger.error("#{Time.zone.now} Problem reading #{description.downcase}: #{e.message.downcase}")
+    raise e
   ensure
     while time < Time.zone.now
       self.time += interval
@@ -59,7 +60,7 @@ class Instrument < ActiveRecord::Base
   end
   
   def default_interval
-    config['interval'] || 60
+    config['interval'] || APP_CONFIG['interval'] || 60
   end
   
   private
@@ -68,17 +69,29 @@ class Instrument < ActiveRecord::Base
   attr_accessor :interval
       
   class << self    
+    
     def observe!
       Rails.logger.info "#{Time.zone.now} Starting observations."
       instruments = active.all(:include => :devices)
       instruments.each(&:start!)
-      while true do
-        instruments.sort!
-        until instruments.first.due?
-          sleep 1
+      begin
+        while true do
+          instruments.sort!
+          until instruments.first.due?
+            sleep 1
+          end
+          instruments.first.observe!
         end
-        instruments.first.observe!
-        # TODO: touch a file to indicate alive to monit?
+      rescue Errno::ECONNABORTED, Errno::ECONNRESET, Errno::ETIMEDOUT, Errno::ECONNREFUSED
+        Rails.logger.error("owserver down...")
+        until OneWire::Transaction.ping
+          sleep APP_CONFIG['interval'] || 60
+        end
+        Rails.logger.error("owserver back up!")
+        instruments.each(&:start!)
+        retry
+      rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
+        retry
       end
     rescue TerminateException
       Rails.logger.info "#{Time.zone.now} Stopping observations."

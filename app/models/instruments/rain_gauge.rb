@@ -24,7 +24,7 @@ class RainGauge < Instrument
     
   def device_is_ds2423
     errors.add_to_base("device should be a DS2423") unless device.try(:read, :type) == "DS2423"
-  rescue SystemCallError => e
+  rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
     errors.add_to_base("could not verify the one-wire device (#{e.message.downcase})")
   end
   
