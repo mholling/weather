@@ -18,6 +18,10 @@ class RainGauge < Instrument
       self.interval = [ 1.05 * interval, default_interval ].min
       nil
     end
+  rescue NoOldCountError => e
+    Rails.logger.error "RainGauge (id:#{id}) - couldn't retrieve old count from device - #{e.message}"
+    self.old_count = count
+    nil
   end
   
   private
@@ -41,13 +45,13 @@ class RainGauge < Instrument
   end
   
   def old_count
-    unpack(device.read(page_attribute))
-  rescue NoOldCountError
-    0
+    @old_count ||= unpack(device.read(page_attribute))
   end
   
   def old_count=(count)
+    @old_count = count
     device.write(page_attribute, pack(count))
+  rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
   end
   
   def count_attribute
@@ -65,10 +69,9 @@ class RainGauge < Instrument
   
   def unpack(string)
     number, digest = string.unpack("LA16x12")
-    raise NoOldCountError if digest != Digest::MD5.digest([ number ].pack("L"))
+    raise NoOldCountError, "digest did not match number" unless digest == Digest::MD5.digest([ number ].pack("L"))
     number
-  rescue ArgumentError
-    raise NoOldCountError
-  end
-  
+  rescue ArgumentError, NoMethodError, TypeError => e
+    raise NoOldCountError, e.message
+  end  
 end

@@ -40,11 +40,9 @@ class Instrument < ActiveRecord::Base
   
   def observe!
     sleep [ time - Time.zone.now, 0 ].max
-    if values = self.read!
-      [ values ].flatten.each do |value|
-        observations.create(:value => value, :time => Time.zone.now)
-        Rails.logger.debug "#{Time.zone.now} #{description.humanize} observed #{value}"
-      end
+    if value = self.read!
+      observations.create(:value => value, :time => Time.zone.now)
+      Rails.logger.debug "#{Time.zone.now} #{description.humanize} observed #{value}"
     end
   rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
     Rails.logger.info "#{Time.zone.now} Problem reading #{description.downcase}: #{e.message.downcase}"
@@ -69,7 +67,6 @@ class Instrument < ActiveRecord::Base
   attr_accessor :interval
       
   class << self    
-    
     def observe!
       Rails.logger.info "#{Time.zone.now} Starting observations."
       instruments = active.all(:include => :devices)
