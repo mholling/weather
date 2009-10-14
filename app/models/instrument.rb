@@ -43,11 +43,11 @@ class Instrument < ActiveRecord::Base
     if values = self.read!
       [ values ].flatten.each do |value|
         observations.create(:value => value, :time => Time.zone.now)
-        Rails.logger.info("#{Time.zone.now} #{description.humanize} observed #{value}")
+        Rails.logger.debug "#{Time.zone.now} #{description.humanize} observed #{value}"
       end
     end
   rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
-    Rails.logger.error("#{Time.zone.now} Problem reading #{description.downcase}: #{e.message.downcase}")
+    Rails.logger.info "#{Time.zone.now} Problem reading #{description.downcase}: #{e.message.downcase}"
     raise e
   ensure
     while time < Time.zone.now
