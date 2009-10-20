@@ -1,8 +1,9 @@
 @demo = ENV["RAILS_ENV"] == "demo"
 
 set :application, "weather"
-set :domain, @demo ? "weather.matthewhollingworth.net" : "matthew@squeeze"
+set :domain, @demo ? "matthewhollingworth.net" : "matthew@squeeze"
 set :deploy_to, @demo ? "/home/mholling/weather" : "/var/www/weather"
+set :rails_env, @demo ? "demo" : "production"
 set :repository, "git://github.com/mholling/weather.git"
 set :revision, "master"
 set :web_command, "sudo apache2ctl"
