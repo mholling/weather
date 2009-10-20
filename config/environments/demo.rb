@@ -27,5 +27,3 @@ config.log_level = :error
 
 # Enable threaded mode
 # config.threadsafe!
-
-config.gem "one_wire", :source => "http://gemcutter.org"

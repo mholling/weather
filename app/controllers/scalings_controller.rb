@@ -8,7 +8,7 @@ class ScalingsController < ApplicationController
   end
   
   def update
-    @scaling = Scaling.find(params[:id]).update_attributes(:position => params[:position])
+    Scaling.find(params[:id]).update_attributes(:position => params[:position]) unless Rails.env.demo?
     render :nothing => true
   end
 end

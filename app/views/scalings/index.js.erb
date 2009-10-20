@@ -37,7 +37,6 @@ var app = {
       new_scalings = $('.content').parents('.scaling:visible');
       new_scalings.find('.content').css("background", "url(/images/ajax-loader.gif) center no-repeat");
       new_scalings.find('a.show').each(function(index, anchor) {
-        // alert(anchor.href)
         data = { date: new_scalings.parents('.scale').find('.date').data('date').toDateString() }
         jQuery.get(anchor.href, data, function() {
           $(anchor).parents('.scaling').find('.content').css("background", "none");
@@ -48,19 +47,21 @@ var app = {
 
   sortable: {
     init: function() {
-      $('.scalings').sortable({
-        handle: '.handle',
-        placeholder: 'ui-state-highlight',
-        forcePlaceholderSize: true,
-        update: function(event, ui) {
-          data = {
-            _method: 'PUT',
-            position: $(event.target).find('.scaling').index(ui.item)
-          };
-          $.post(ui.item.find('a.move').get(0).href, data);          
-        }
-      });
-      $('.scalings .handle').disableSelection();
+      <%- unless Rails.env.demo? -%>
+        $('.scalings').sortable({
+          handle: '.handle',
+          placeholder: 'ui-state-highlight',
+          forcePlaceholderSize: true,
+          update: function(event, ui) {
+            data = {
+              _method: 'PUT',
+              position: $(event.target).find('.scaling').index(ui.item)
+            };
+            $.post(ui.item.find('a.move').get(0).href, data);          
+          }
+        });
+        $('.scalings .handle').disableSelection();
+      <%- end -%>
     }
   }
 };

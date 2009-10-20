@@ -1,6 +1,8 @@
+@demo = ENV["RAILS_ENV"] == "demo"
+
 set :application, "weather"
-set :domain, "matthew@squeeze"
-set :deploy_to, "/var/www/weather"
+set :domain, @demo ? "weather.matthewhollingworth.net" : "matthew@squeeze"
+set :deploy_to, @demo ? "/home/mholling/weather" : "/var/www/weather"
 set :repository, "git://github.com/mholling/weather.git"
 set :revision, "master"
 set :web_command, "sudo apache2ctl"
@@ -24,7 +26,7 @@ namespace :vlad do
       require 'tempfile'
       file = Tempfile.new("database.yml")
       file.print %{
-production:
+#{@demo ? 'demo' : 'production'}:
   database: #{application}
   adapter: mysql
   encoding: utf8
@@ -46,7 +48,6 @@ production:
   desc "Symlink database.yml file."
   remote_task :symlink do
     run "ln -nfs #{shared_path}/config/database.yml #{current_path}/config/database.yml"
-    # run "ln -nfs #{current_path}/public #{current_path}/public/add_expires_header"
   end
  
   desc "Create database.yml in shared directory."
@@ -57,12 +58,12 @@ production:
   namespace :daemon do
     desc "Stop weather daemon."
     remote_task :stop do
-      # run "sudo monit stop weather"
+      # run "sudo monit stop weather" unless @demo
     end
     
     desc "Start weather daemon."
     remote_task :start do
-      # run "sudo monit start weather"
+      # run "sudo monit start weather" unless @demo
     end
   end
   
