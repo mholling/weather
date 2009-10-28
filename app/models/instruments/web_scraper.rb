@@ -1,3 +1,5 @@
+require 'ostruct'
+
 class WebScraper < Instrument
   validate :config_ok
   
