@@ -9,15 +9,15 @@ class WebScraper < Instrument
   
   def read!
     time_selector, value_selector = config['time-selector'], config['value-selector']
+    uri = URI.parse(config['url'])
+
     @scraper ||= Scraper.define do
       process_first time_selector, :time => :text
       process_first value_selector, :value => :text
       result :time, :value
     end
     
-    uri = URI.parse(config['url'])
-    scraped = @scraper.scrape(uri)
-    
+    scraped = @scraper.scrape(uri)    
     return nil unless scraped.value && scraped.time
     time = Time.zone.parse(scraped.time)
     return nil unless time && time != @time
