@@ -4,8 +4,6 @@ class Thermometer < Instrument
   validate :device_is_ds18b20
   
   def read!
-    # value = Float(device.read(:temperature12))
-    # @value = value unless @value == value
     Float(device.read(:temperature12))
   end
   

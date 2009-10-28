@@ -17,15 +17,15 @@ class Barometer < Instrument
     end
   end
   
-  def setup!
+  def calibrate!
     unless valid?
       puts "Can't set up the barometer yet!"
-      errors.each { |attribute, error| puts "#{attribute}: #{error}" }
+      puts errors.map { |attribute, error| "#{attribute}: #{error}" }
       return
     end
     
-    self.sensitivity = 0.0046
-    self.offset = 0.204
+    self.sensitivity ||= 0.0046
+    self.offset ||= 0.204
 
     [ %w{altitude minimum_pressure maximum_pressure oversample}, %w{metres hPa hPa bits}, %w{to_f to_f to_f to_i} ].transpose.map do |attribute, units, convert|
       print "Enter #{attribute.humanize.downcase} in #{units}: "
@@ -46,7 +46,7 @@ class Barometer < Instrument
     
     self.reference = calibrate_to(target_reference, 0.01)
 
-    puts "Reference voltage calibrated. (Reference pressure is %.1f hPa.)" % sea_level_pressure_from_voltage(reference)
+    puts "Reference voltage calibrated. (Reference pressure is %.1f hPa.)" % sea_level_pressure_from_voltage(reference, target_gain)
     
     print "Enter the current BOM pressure in hPa: "
     pressure = gets.to_f
@@ -63,7 +63,7 @@ class Barometer < Instrument
     puts "Gain calibrated. (Calculated gain as %1.4f.)" % gain
     save
   end
-  
+    
   def sensor_voltage_from_pressure(pressure)
     vdd = device.read(:Vdd)
     (offset + sensitivity * (pressure - 150)) * vdd / 5.1
@@ -74,17 +74,13 @@ class Barometer < Instrument
     ((5.1 * voltage / vdd) - offset)/sensitivity + 150
   end
   
-  def sea_level_pressure_from_voltage(voltage)
+  def sea_level_pressure_from_voltage(voltage, gain = self.gain)
     sensor_voltage = reference + (voltage - reference)/gain
     convert_to_sea_level(pressure_from_sensor_voltage(sensor_voltage))    
   end
   
   def pressure_conversion_factor
-    standard_temperature = 288.15
-    lapse_rate = -0.0065
-    gas_constant = 8.31432
-    molar_mass = 0.0289644
-    gravity = 9.80665
+    standard_temperature, lapse_rate, gas_constant, molar_mass, gravity = 288.15, -0.0065, 8.31432, 0.0289644, 9.80665
     (standard_temperature/(standard_temperature + lapse_rate * altitude)) ** (gravity * molar_mass/(gas_constant * lapse_rate))
   end
     
