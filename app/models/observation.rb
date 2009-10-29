@@ -7,6 +7,7 @@ class Observation < ActiveRecord::Base
   
   named_scope :chronological, :order => :time
   named_scope :with_meteorological_date, lambda { |dates| { :conditions => { :meteorological_date => dates } } }
+  named_scope :with_time, lambda { |times| { :conditions => { :time => times } } }
   named_scope :with_value, :conditions => [ "value IS NOT :nil", { :nil => nil } ]
   
   before_validation :set_meteorological_date

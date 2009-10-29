@@ -73,6 +73,38 @@ class Barometer < Instrument
   end
   
   def calibrate_to!(web_scraper)
+    stats = web_scraper.observations.with_value.with_time(updated_at .. Time.zone.now).map do |scraped_observation|
+      nearby_observations = observations.with_time(scraped_observation.time - 5.minutes .. scraped_observation.time + 5.minutes)
+      nearest_observation = nearby_observations.inject do |closest_observation, observation|
+        (closest_observation.time - scraped_observation.time).abs < (observation.time - scraped_observation.time).abs ? closest_observation : observation
+      end
+      nearest_observation ? [ nearest_observation.value, scraped_observation.value ] : nil
+    end.compact.map do |measured_pressure, scraped_pressure|
+      [ sensor_voltage_from_pressure(measured_pressure), scraped_pressure ]
+    end.inject(OpenStruct.new(:x => 0.0, :x2 => 0.0, :y => 0.0, :xy => 0.0, :n => 0)) do |sums, (y, x)|
+      sums.x  += x
+      sums.x2 += x * x
+      sums.y  += y
+      sums.xy += x * y
+      sums.n  += 1
+      sums
+    end
+    
+    slope     = (sums.n * sums.xy - sums.x * sums.y )/(sums.n * sums.x2 - sums.x * sums.x)
+    intercept = (sums.y * sums.x2 - sums.x * sums.xy)/(sums.n * sums.x2 - sums.x * sums.x)
+    
+    new_sensitivity = slope / gain
+    new_offset = ((gain - 1.0) * reference + intercept + 150.0 * slope)/gain
+    
+    puts "sensitivity adjustment: %.8f  ->  %.8f" % [ sensitivity, new_sensitivity ]
+    puts "offset adjustment:      %.8f  ->  %.8f" % [ offset, new_offsert ]
+    puts
+    print "y to save: "
+    if gets.downcase == "y"
+      self.sensitivity, self.offset = new_sensitivity, new_offset
+      save
+      puts "New sensor calibration saved. (You may wish to recalibrate trimmers.)"
+    end
   end
   
   def sensor_voltage_range
