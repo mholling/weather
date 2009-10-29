@@ -20,8 +20,7 @@ class WebScraper < Instrument
     scraped = @scraper.scrape(uri)    
     return nil unless scraped.value && scraped.time
     time = Time.zone.parse(scraped.time)
-    return nil unless time && time != @time
-    @time = time
+    return nil unless time && observations.chronological.last.time < time
     
     OpenStruct.new(:to_f => scraped.value.to_f, :to_time => time)
   rescue Scraper::Reader::HTTPError, Scraper::Reader::HTMLParseError => e
