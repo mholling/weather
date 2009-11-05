@@ -10,8 +10,8 @@ class Device < ActiveRecord::Base
   delegate :present?, :read, :write, :dir, :to => :one_wire_device
   
   def oversample(attribute, bits)
-    n, sum = 2**(2*bits), 0
-    n.times { sum += read(attribute) }
+    n, sum = 2**(2*bits), 0.0
+    n.times { sum += read(attribute).to_f }
     sum / n
   end
 end
