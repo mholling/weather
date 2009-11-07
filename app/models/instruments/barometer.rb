@@ -156,7 +156,7 @@ class Barometer < Instrument
     rows = [ ["", " Before ", " After "] ]
     rows << [ " Lowest Pressure ",  " %.1f hPa " % (intercept + gradient * 1.5), " %.1f hPa " % (new_intercept + new_gradient * 1.5) ]
     rows << [ " Highest Pressure ", " %.1f hPa " % (intercept + gradient * 4.9), " %.1f hPa " % (new_intercept + new_gradient * 4.9) ]
-    rows << [ " Resolution ", " %.4f hPa " % gradient * 0.01, , " %.4f hPa " % new_gradient * 0.01 ]
+    rows << [ " Resolution ", " %.4f hPa " % gradient * 0.01, " %.4f hPa " % new_gradient * 0.01 ]
     widths = rows.transpose.map { |entries| entries.map(&:length).max }
     rows.insert(1, widths.map { |width| "-" * width })
     puts
