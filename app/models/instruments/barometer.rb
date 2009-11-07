@@ -18,7 +18,7 @@ class Pressure
   delegate :to_f, :to => :value
   
   def self.conversion_factor(altitude)
-    altitude.zero? 1.0 : (STANDARD_TEMPERATURE/(STANDARD_TEMPERATURE + LAPSE_RATE * altitude)) ** (GRAVITY * MOLAR_MASS/(GAS_CONSTANT * LAPSE_RATE))
+    altitude.zero? ? 1.0 : (STANDARD_TEMPERATURE/(STANDARD_TEMPERATURE + LAPSE_RATE * altitude)) ** (GRAVITY * MOLAR_MASS/(GAS_CONSTANT * LAPSE_RATE))
   end
 end
 
