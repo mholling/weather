@@ -78,8 +78,8 @@ class Barometer < Instrument
     print "Set jumper to calibration position and press enter to begin reference calibration: "
     gets
     
-    returning calibrate_vad_to(target_reference, 0.01) do |actual_reference|
-      puts "Reference voltage calibrated. (Calculated reference as %1.4f Volts)" % actual_reference
+    returning calibrate_vad_to(target_reference, 0.01) do |reference|
+      puts "Reference voltage calibrated as %1.4f volts." % reference
     end
   end
   
@@ -100,8 +100,8 @@ class Barometer < Instrument
     
     actual_voltage = calibrate_vad_to(target_voltage, 0.01)
     
-    returning (actual_voltage - reference)/(sensor_voltage - reference) do |actual_gain|
-      puts "Gain calibrated. (Calculated gain as %1.4f.)" % actual_gain
+    returning (actual_voltage - reference)/(sensor_voltage - reference) do |gain|
+      puts "Gain calibrated as %1.4f." % gain
     end
   end
   

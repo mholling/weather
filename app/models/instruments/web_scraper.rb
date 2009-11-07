@@ -17,12 +17,16 @@ class WebScraper < Instrument
       result :time, :value
     end
     
-    scraped = @scraper.scrape(uri)    
-    return nil unless scraped.value && scraped.time
-    time = Time.zone.parse(scraped.time)
-    return nil unless time && observations.chronological.last.time < time
+    scraped = @scraper.scrape(uri)
+    begin
+      time = Time.zone.parse(scraped.time)
+      to_f = Float(scraped.value)
+    rescue ArgumentError, TypeError
+      return nil
+    end
+    return nil unless time && observations.chronological.last && observations.chronological.last.time < time
     
-    OpenStruct.new(:to_f => scraped.value.to_f, :to_time => time)
+    OpenStruct.new(:to_f => to_f, :to_time => time)
   rescue Scraper::Reader::HTTPError, Scraper::Reader::HTMLParseError => e
     Rails.logger.error "#{Time.zone.now} Couldn't scrape from #{uri} (#{e.message})"
     nil
@@ -36,7 +40,7 @@ class WebScraper < Instrument
     errors.add(:config, "must have config['value-selector'] specified") unless config['value-selector']
     
     # # # Sample config:
-    # config['url'] = "http://www.bom.gov.au/products/IDN60903/IDN60903.94925.shtml"
+    # config['url'] = "http://www.bom.gov.au/products/IDN60801/IDN60801.94925.shtml"
     # config['time-selector'] = "table.tabledata > tbody > tr.rowleftcolumn > td:first-of-type"
     # config['value-selector'] = "table.tabledata > tbody > tr.rowleftcolumn > td:nth-of-type(12)"
   end
