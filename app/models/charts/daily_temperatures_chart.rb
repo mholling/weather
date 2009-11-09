@@ -1,4 +1,7 @@
 class DailyTemperaturesChart < Chart
+  
+  validates_size_of :instruments, :is => 1
+  
   def data(interval)
     maximums = instrument.observations.with_value.with_meteorological_date(interval).maximum(:value, :group => :meteorological_date)
     minimums = instrument.observations.with_value.with_meteorological_date(interval).minimum(:value, :group => :meteorological_date)

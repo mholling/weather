@@ -1,4 +1,7 @@
 class RainfallChart < Chart
+  
+  validates_size_of :instruments, :is => 1
+  
   def data(interval)
     observations = instrument.observations.chronological.with_value.with_meteorological_date(interval)
     series = [ [ interval.begin.beginning_of_meteorological_day.to_js, 0.0 ] ]

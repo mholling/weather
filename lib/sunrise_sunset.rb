@@ -14,12 +14,13 @@ module SunriseSunset
       solar_transit = approximate_solar_noon + 0.0053 * sin(solar_mean_anomoly / DEGREE) - 0.0069 * sin(2 * ecliptic_longitude / DEGREE)
       declination_of_sun = DEGREE * asin(sin(ecliptic_longitude / DEGREE) * sin(23.45 / DEGREE))
       cos_day_hour_angle = (sin(-0.83 / DEGREE) - sin(latitude / DEGREE) * sin(declination_of_sun / DEGREE))/(cos(latitude / DEGREE) * cos(declination_of_sun / DEGREE))
+      cos_twilight_hour_angle = cos_day_hour_angle - tan(6.0 / DEGREE) / cos(latitude / DEGREE)
       @julian_sunset, @julian_sunrise, @julian_dusk, @julian_dawn = nil, nil, nil, nil
       begin
         day_hour_angle = DEGREE * acos(cos_day_hour_angle)
         @julian_sunset = JD_2000 + 0.0009 + (day_hour_angle - longitude) / 360.0 + julian_cycle + 0.0053 * sin(solar_mean_anomoly / DEGREE) - 0.0069 * sin(2 * ecliptic_longitude / DEGREE)
-        @julian_sunrise = 2 * solar_transit - julian_sunset
-        twilight_hour_angle = DEGREE * acos(cos_day_hour_angle - tan(6.0 / DEGREE) / cos(latitude / DEGREE)) - day_hour_angle
+        @julian_sunrise = 2 * solar_transit - @julian_sunset
+        twilight_hour_angle = DEGREE * acos(cos_twilight_hour_angle) - day_hour_angle
         @julian_dusk = @julian_sunset + twilight_hour_angle / 360.0
         @julian_dawn = @julian_sunrise - twilight_hour_angle / 360.0
       rescue Errno::EDOM
@@ -29,15 +30,13 @@ module SunriseSunset
     %w{dawn sunrise sunset dusk}.each do |method|
       class_eval %{
         def #{method}
-          DateTime.jd(@julian_#{method} + 0.5).in_time_zone
-        rescue NoMethodError
-          nil
+          DateTime.jd(@julian_#{method} + 0.5).in_time_zone rescue nil
         end
       }
     end
   end
 
-  def location(latitude = -35.46628, longitude = 149.101982)
+  def location(latitude, longitude)
     DateLocation.new(self, latitude, longitude)
   end
 end
