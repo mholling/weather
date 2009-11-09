@@ -5,8 +5,6 @@ class Statistic < ActiveRecord::Base
   
   has_many :scalings, :dependent => :destroy, :as => :scalable
   has_many :scales, :through => :scalings
-  
-  validates_size_of :instruments, :minimum => 1
 
   serialize :config, Hash
   

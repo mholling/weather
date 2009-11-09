@@ -13,3 +13,7 @@
     %span.value.total= "#{data.round(1)}#{@statistic.config['units']}"
   - when Current
     %span.value.current= "#{data.round(1)}#{@statistic.config['units']}"
+  - when Sunrise
+    %span.value.sunrise= data.strftime("%I.%M<small>%p</small>").gsub(/^0/, "").downcase
+  - when Sunset
+    %span.value.sunrise= data.strftime("%I.%M<small>%p</small>").gsub(/^0/, "").downcase

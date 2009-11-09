@@ -15,7 +15,7 @@ class SunriseSunsetChart < Chart
 
   def data(interval)
     (interval.begin.to_date..interval.end.to_date).map do |date|
-      location = date.location(config["latitude"], config["longitude"])
+      location = date.location(APP_CONFIG["latitude"], APP_CONFIG["longitude"])
       [ [ date, date.beginning_of_day, location.dawn ],
         [ date, location.dawn, location.sunrise ],
         [ date, location.sunset, location.dusk ],
