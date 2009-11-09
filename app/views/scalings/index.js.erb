@@ -12,6 +12,7 @@ var app = {
   init: function() {
     this.tabs.init();
     this.sortable.init();
+    this.columns.init();
   },
   
   tabs: {
@@ -19,6 +20,7 @@ var app = {
       $('#tabs').tabs({
         show: function(event, ui) {
           app.scales.refresh();
+          app.columns.resize();
         }
       });
     }
@@ -62,6 +64,18 @@ var app = {
         });
         $('.scalings .handle').disableSelection();
       <%- end -%>
+    }
+  },
+  
+  columns: {
+    init: function() {
+      $(window).resize(this.resize);
+    },
+    
+    resize: function() {
+      $('.column:visible').each(function(index, element) {
+        $(element).css({'height': ($(window).height() - element.offsetTop - 10)+'px'})
+      });
     }
   }
 };
