@@ -4,7 +4,7 @@ class Pressure
   attr_reader :value, :altitude
   
   def initialize(value, altitude)
-    self.value, self.altitude = value, altitude
+    @value, @altitude = value, altitude
   end
   
   def to_sea_level
@@ -12,7 +12,7 @@ class Pressure
   end
   
   def to_altitude(altitude)
-    new(value * Pressure.conversion_factor(altitude) / Pressure.conversion_factor(self.altidute), altitude)
+    Pressure.new(value * Pressure.conversion_factor(altitude) / Pressure.conversion_factor(@altitude), altitude)
   end
   
   delegate :to_f, :to => :value
@@ -31,7 +31,7 @@ class Barometer < Instrument
     pressure_from_output_voltage(normalised_vad).to_sea_level.to_f
   end
   
-  %w{altitude oversample sensitivity offset gradient intercept}.each do |attribute|
+  %w{altitude oversample sensitivity offset reference gain gradient intercept}.each do |attribute|
     define_method "#{attribute}=" do |value|
       self.config[attribute] = value
     end
@@ -65,31 +65,33 @@ class Barometer < Instrument
     target_gain = (4.9 - 1.5)/(maximum_sensor_voltage - minimum_sensor_voltage)
     target_reference = (target_gain * minimum_sensor_voltage - 1.5)/(target_gain - 1.0)
     
-    reference = calibrate_reference(target_reference)
-    gain = calibrate_gain(target_gain, reference)
+    self.reference = calibrate_reference(target_reference)
+    self.gain = calibrate_gain(target_gain)
     
-    self.gradient = sensitivity * gain
+    self.gradient = 1.0 / (sensitivity * gain)
     self.intercept = 150.0 + (reference * (gain - 1.0) / gain - offset) / sensitivity
     
     save
   end
   
   def calibrate_reference(target_reference)
-    print "Set jumper to calibration position and press enter to begin reference calibration: "
-    gets
+    print "Set jumper to calibration position and press enter to begin reference calibration (s to skip): "
+    return target_reference if gets =~ /^s/
     
-    returning calibrate_vad_to(target_reference, 0.01) do |reference|
-      puts "Reference voltage calibrated as %1.4f volts." % reference
+    returning calibrate_vad_to(target_reference, 0.01) do |actual_reference|
+      puts "Reference voltage calibrated as %1.4f volts." % actual_reference
     end
   end
   
-  def calibrate_gain(target_gain, reference)
-    print "Enter the current BOM pressure in hPa: "
+  def calibrate_gain(target_gain)
+    print "Enter the current MSL pressure in hPa: "
     current_pressure = Pressure.new(gets.to_f, 0.0)
     
     reference_pressure = pressure_from_sensor_voltage(reference)
     if (current_pressure.to_sea_level.to_f - reference_pressure.to_sea_level.to_f).abs < 5.0
-      puts "(Close to reference pressure of %1.4f; results could be poor.)" % reference_pressure
+      puts "(Close to reference pressure of %1.4f; results could be poor.)" % reference_pressure.to_sea_level
+    else
+      puts "(Reference pressure is %1.4f hPa.)" % reference_pressure.to_sea_level
     end
     
     print "Set jumper to normal position and press enter to begin gain calibration: "
@@ -98,42 +100,46 @@ class Barometer < Instrument
     sensor_voltage = sensor_voltage_from_pressure(current_pressure)
     target_voltage = target_gain * (sensor_voltage - reference) + reference
     
-    actual_voltage = calibrate_vad_to(target_voltage, 0.01)
+    actual_voltage = calibrate_vad_to(target_voltage, 0.04)
     
-    returning (actual_voltage - reference)/(sensor_voltage - reference) do |gain|
-      puts "Gain calibrated as %1.4f." % gain
+    returning (actual_voltage - reference)/(sensor_voltage - reference) do |actual_gain|
+      puts "Gain calibrated as %1.4f." % actual_gain
     end
   end
   
   def calibrate_vad_to(target_voltage, error)
     voltages = [ normalised_vad ] * 10
+    phase = true
     until voltages.all? { |voltage| (voltage - target_voltage).abs < error }
-      sleep 0.5
+      sleep 0.1
       voltages.shift
       voltages << normalised_vad
-      print "\r%+1.4f" % (voltages.last - target_voltage) # adapt number of decimal places according to error..?
+      print "\rtarget: %1.4f, actual: %1.4f, error: %+1.4f %s" % [ target_voltage, voltages.last, (voltages.last - target_voltage), phase ? "\/" : "\\" ]
+      # adapt number of decimal places according to error..?
+      phase = !phase
     end
+    puts
     voltages.last
   end
 
   def sensor_voltage_from_pressure(pressure)
     offset + sensitivity * (pressure.to_altitude(altitude).to_f - 150.0)
   end
-
-  def pressure_from_sensor_voltage(voltage)
-    Pressure.new((voltage - offset)/sensitivity + 150.0, altitude).to_sea_level
-  end
   
+  def pressure_from_sensor_voltage(voltage)
+    Pressure.new((voltage - offset)/sensitivity + 150.0, altitude)
+  end
+    
   def output_voltage_from_pressure(pressure)
     (pressure.to_sea_level.to_f - intercept)/gradient
   end
   
   def pressure_from_output_voltage(voltage)
-    Pressure.new(intercept + gradient * voltage, 0.0)
+    Pressure.new(intercept + gradient * voltage, altitude)
   end
 
   def normalised_vad
-    device.oversample(:Vad, oversample) * 5.1 / device.oversample(:Vdd, oversample)
+    device.oversample(:VAD, oversample) * 5.1 / device.oversample(:VDD, oversample)
   end
 
   def calibrate_to!(web_scraper)
