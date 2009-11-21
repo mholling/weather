@@ -139,7 +139,24 @@ class Barometer < Instrument
   end
 
   def normalised_vad
-    device.oversample(:VAD, oversample) * 5.1 / device.oversample(:VDD, oversample)
+    samples, values = (2**(2*oversample)).round, []
+    while values.length < samples
+      values << device.read(:VAD).to_f * 5.1 / device.read(:VDD).to_f
+      puts "measured: %1.4f" % values.last
+      if values.length == samples
+        median = values.sort[samples / 2]
+        values.reject! do |value|
+          in_bounds = (value - median).abs > 0.05
+          unless in_bounds
+            Rails.logger.error Time.zone.now
+            Rails.logger.error "rejected value: %1.4f" % value
+            Rails.logger.error "  median value: %1.4f" % median
+          end
+          in_bounds
+        end
+      end
+    end
+    values.sum / samples
   end
 
   def calibrate_to!(web_scraper)
