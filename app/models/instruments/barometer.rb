@@ -146,13 +146,13 @@ class Barometer < Instrument
       if values.length == samples
         median = values.sort[samples / 2]
         values.reject! do |value|
-          in_bounds = (value - median).abs > 0.05
-          unless in_bounds
+          out_of_bounds = (value - median).abs > 0.05
+          if out_of_bounds
             Rails.logger.error Time.zone.now
             Rails.logger.error "rejected value: %1.4f" % value
             Rails.logger.error "  median value: %1.4f" % median
           end
-          in_bounds
+          out_of_bounds
         end
       end
     end
