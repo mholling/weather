@@ -1,4 +1,4 @@
-class TemperatureChart < Chart
+class TimeSeriesChart < Chart
   
   validates_size_of :instruments, :is => 1
   
