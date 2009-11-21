@@ -1,4 +1,4 @@
-class DailyTemperaturesChart < Chart
+class DailyExtremaChart < Chart
   
   validates_size_of :instruments, :is => 1
   
