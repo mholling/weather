@@ -19,4 +19,4 @@
     %span.value.sunrise= data.strftime("%I.%M<small>%p</small>").gsub(/^0/, "").downcase
   - when PressureTrend
     %span.value.pressure-trend= "%1.1f<small>hPa</small>" % data.pressure
-    = "(#{data.trend})"
+    %small= "(#{data.trend})"

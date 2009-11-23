@@ -14,16 +14,18 @@ class PressureTrend < Statistic
     end
     pressure_change = pressures.last - pressures.first
     speed = case pressure_change.abs
-      when 0.0 ... 3.5 then nil
+      when 0.0 ... 0.3 then nil
+      when 0.3 ... 1.5 then "slowly"
+      when 1.5 ... 3.5 then nil
       when 3.5 ... 6.0 then "rapidly"
       else "very rapidly"
     end
     direction = case
-      when pressure_change >  0.3 then "rising"
-      when pressure_change < -0.3 then "falling"
+      when pressure_change >=  0.3 then "rising"
+      when pressure_change <= -0.3 then "falling"
       else "steady"
     end
-    trend = [ speed, direction ].compact.join(" ")
+    trend = [ direction, speed ].compact.join(" ")
     pressure = instrument.observations.with_value.with_meteorological_date(interval).last.value
     OpenStruct.new(:pressure => pressure, :trend => trend)
   rescue ZeroDivisionError
