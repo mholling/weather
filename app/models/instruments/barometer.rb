@@ -143,7 +143,7 @@ class Barometer < Instrument
     samples.times { values << device.read(:VAD).to_f * 5.1 / device.read(:VDD).to_f }
     median = values.sort[samples / 2]
     values.reject! { |value| (value - median).abs > 0.05 }
-    values.sum / samples
+    values.sum / values.length
   end
   
   def calibration_information
@@ -214,7 +214,7 @@ class Barometer < Instrument
   protected
   
   def device_is_ds2438
-    errors.add_to_base("device should be a DS2438") unless device.try(:read, :type) == "DS2438"
+    errors.add_to_base("device should be a DS2438") unless devices.first.try(:read, :type) == "DS2438"
   rescue SystemCallError, OneWire::BadRead, OneWire::ShortRead => e
     errors.add_to_base("could not verify the one-wire device (#{e.message.downcase})")
   end

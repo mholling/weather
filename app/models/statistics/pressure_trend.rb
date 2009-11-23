@@ -14,14 +14,14 @@ class PressureTrend < Statistic
     end
     pressure_change = pressures.last - pressures.first
     speed = case pressure_change.abs
-    when 0.0 ... 3.5 then nil
-    when 3.5 ... 6.0 then "rapidly"
-    else "very rapidly"
+      when 0.0 ... 3.5 then nil
+      when 3.5 ... 6.0 then "rapidly"
+      else "very rapidly"
     end
     direction = case
-    when pressure_change.abs < 0.3 then "steady"
-    when pressure_change > 0.0 then "rising"
-    when pressure_change < 0.0 then "falling"
+      when pressure_change >  0.3 then "rising"
+      when pressure_change < -0.3 then "falling"
+      else "steady"
     end
     trend = [ speed, direction ].compact.join(" ")
     pressure = instrument.observations.with_value.with_meteorological_date(interval).last.value
