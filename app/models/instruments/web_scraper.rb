@@ -32,6 +32,18 @@ class WebScraper < Instrument
     nil
   end
   
+  def matched_observations_for(instrument, options = {})
+    options[:after] ||= instrument.observations.with_value.chronological.first.time - 1.second
+    options[:margin] ||= 5.minutes
+    observations.with_value.after([ options[:after], updated_at ].max).map do |scraped_observation|
+      nearby_observations = instrument.observations.with_time(scraped_observation.time - options[:margin] .. scraped_observation.time + options[:margin])
+      nearest_observation = nearby_observations.inject do |closest_observation, observation|
+        (closest_observation.time - scraped_observation.time).abs < (observation.time - scraped_observation.time).abs ? closest_observation : observation
+      end
+      nearest_observation ? [ nearest_observation, scraped_observation ] : nil
+    end.compact
+  end
+  
   protected
   
   def config_ok
