@@ -161,6 +161,7 @@ class Barometer < Instrument
     strings << "Lowest Pressure: %.1f hPa" % Pressure.new(intercept + gradient * 1.5, altitude).to_sea_level
     strings << "Highest Pressure: %.1f hPa" % Pressure.new(intercept + gradient * 4.9, altitude).to_sea_level
     strings << "Resolution: %.4f hPa" % Pressure.new(gradient * 0.01, altitude).to_sea_level
+    strings << "Offset Voltage: %.4f V" % offset
     strings.join("; ")
   end
 
@@ -175,8 +176,8 @@ class Barometer < Instrument
       [ output_voltage_from_pressure(measured_pressure), scraped_pressure.to_altitude(altitude).value ]
     end
     
-    if v_p.empty?
-      puts "No new scraped pressure values to calibrate from!"
+    if v_p.length < 2
+      puts "Not enough scraped pressure values to calibrate from!"
       return
     end
     
@@ -202,6 +203,9 @@ class Barometer < Instrument
     self.gradient  = (sums.n * sums.vp - sums.v * sums.p )/(sums.n * sums.v2 - sums.v * sums.v)
     self.intercept = (sums.p * sums.v2 - sums.v * sums.vp)/(sums.n * sums.v2 - sums.v * sums.v)
 
+    self.gain = 1.0 / (sensitivity * gradient)
+    self.offset = reference * (gain - 1.0) / gain - (intercept - 150.0) * sensitivity
+
     puts " (After) #{calibration_information}"
 
     updated_observations.zip(voltages).each do |observation, voltage|
@@ -215,9 +219,7 @@ class Barometer < Instrument
         save
         updated_observations.each(&:save)
       end
-      puts "New sensor calibration saved."
-      # # TODO: code here to update sensitivity and offset for next recalibration?
-      # puts "New sensor calibration saved. (You may wish to recalibrate trimmers.)"
+      puts "New sensor calibration saved. (You may wish to re-adjust gain if the offset voltage changed.)"
     else
       reload
       Instrument.restart_observations!
