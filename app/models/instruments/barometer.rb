@@ -41,7 +41,7 @@ class Barometer < Instrument
     end
   end
   
-  def setup!
+  def setup!(options = {})
     unless valid?
       puts "Can't set up the barometer yet!"
       puts errors.map { |attribute, error| "#{attribute}: #{error}" }
@@ -50,7 +50,7 @@ class Barometer < Instrument
     
     self.sensitivity ||= 0.0046
     self.offset ||= 0.204
-
+    
     print "Enter altitude in metres: "
     self.altitude = gets.to_f
     print "Enter minimum pressure in hPa: "
@@ -65,34 +65,50 @@ class Barometer < Instrument
     target_gain = (4.9 - 1.5)/(maximum_sensor_voltage - minimum_sensor_voltage)
     target_reference = (target_gain * minimum_sensor_voltage - 1.5)/(target_gain - 1.0)
     
-    self.reference = calibrate_reference(target_reference)
-    self.gain = calibrate_gain(target_gain)
+    current_pressure = if options[:use_instrument]
+      pressure_from_output_voltage(normalised_vad)
+    else
+      print "Enter the current MSL pressure in hPa: "
+      Pressure.new(gets.to_f, 0.0)
+    end
     
-    self.gradient = 1.0 / (sensitivity * gain)
-    self.intercept = 150.0 + (reference * (gain - 1.0) / gain - offset) / sensitivity
+    begin
+      Instrument.stop_observations!
     
-    save
+      self.reference = adjust_reference(target_reference)
+      self.gain = adjust_gain(target_gain, current_pressure)
+    
+      self.gradient = 1.0 / (sensitivity * gain)
+      self.intercept = 150.0 + (reference * (gain - 1.0) / gain - offset) / sensitivity
+      
+      self.last_calibrated_at = Time.zone.now
+      save
+      puts "Setup complete. #{calibration_information}"
+    rescue IRB::Abort
+      reload
+      puts "Aborted setup, weather daemon currently stopped!"
+    end
   end
   
-  def calibrate_reference(target_reference)
+  def setup_again!
+    setup!(:use_instrument => true)
+  end
+  
+  def adjust_reference(target_reference)
     print "Set jumper to calibration position and press enter to begin reference calibration (s to skip): "
     return target_reference if gets =~ /^s/
     
-    returning calibrate_vad_to(target_reference, 0.01) do |actual_reference|
+    returning adjust_vad_to(target_reference) do |actual_reference|
       puts "Reference voltage calibrated as %1.4f volts." % actual_reference
     end
   end
   
-  def calibrate_gain(target_gain)
-    print "Enter the current MSL pressure in hPa: "
-    current_pressure = Pressure.new(gets.to_f, 0.0)
-    
+  def adjust_gain(target_gain, current_pressure)
     reference_pressure = pressure_from_sensor_voltage(reference)
-    if (current_pressure.to_sea_level.to_f - reference_pressure.to_sea_level.to_f).abs < 5.0
-      puts "(Close to reference pressure of %1.4f; results could be poor.)" % reference_pressure.to_sea_level
-    else
-      puts "(Reference pressure is %1.4f hPa.)" % reference_pressure.to_sea_level
-    end
+    prompt = (current_pressure.to_sea_level.to_f - reference_pressure.to_sea_level.to_f).abs < 5.0 ?
+      "(Current pressure is %1.1f hPa, reference pressure is %1.1f hPa; WARNING: results could be poor.)" :
+      "(Current pressure is %1.1f hPa, reference pressure is %1.1f hPa.)"
+    puts prompt % [ current_pressure.to_sea_level, reference_pressure.to_sea_level ]
     
     print "Set jumper to normal position and press enter to begin gain calibration: "
     gets
@@ -100,28 +116,22 @@ class Barometer < Instrument
     sensor_voltage = sensor_voltage_from_pressure(current_pressure)
     target_voltage = target_gain * (sensor_voltage - reference) + reference
     
-    actual_voltage = calibrate_vad_to(target_voltage, 0.04)
+    actual_voltage = adjust_vad_to(target_voltage)
     
     returning (actual_voltage - reference)/(sensor_voltage - reference) do |actual_gain|
       puts "Gain calibrated as %1.4f." % actual_gain
     end
   end
-  
-  def calibrate_vad_to(target_voltage, error)
-    voltages = [ normalised_vad ] * 10
-    phase = true
-    until voltages.all? { |voltage| (voltage - target_voltage).abs < error }
-      sleep 0.1
-      voltages.shift
-      voltages << normalised_vad
-      print "\rtarget: %1.4f, actual: %1.4f, error: %+1.4f %s" % [ target_voltage, voltages.last, (voltages.last - target_voltage), phase ? "\/" : "\\" ]
-      # adapt number of decimal places according to error..?
-      phase = !phase
-    end
-    puts
-    voltages.last
-  end
 
+  def adjust_vad_to(target_voltage)
+    begin
+      print "Please wait, reading voltage..."
+      actual_voltage = normalised_vad
+      print "\rtarget: %1.4f, actual: %1.4f, error: %+1.4f. Return to repeat or y to end: " % [ target_voltage, actual_voltage, (actual_voltage - target_voltage) ]
+    end until gets =~ /^y/i
+    actual_voltage
+  end
+  
   def sensor_voltage_from_pressure(pressure)
     offset + sensitivity * (pressure.to_altitude(altitude).to_f - 150.0)
   end
@@ -157,7 +167,7 @@ class Barometer < Instrument
   def calibrate_to!(web_scraper)
     # TODO: add code to use updated_at for when #setup! was last called?
     after = last_calibrated_at || observations.with_value.chronological.first.time - 1.second
-    puts "Calibrating for observations back to #{after}."
+    puts "Calibrating for observations back to #{after.localtime}."
     
     v_p = web_scraper.matched_observations_for(self, :margin => 5.minutes, :after => after).map do |observation_pair|
       observation_pair.map { |observation| Pressure.new(observation.value, 0.0) }
@@ -180,6 +190,8 @@ class Barometer < Instrument
     r = (sums.n * sums.vp - sums.v * sums.p)/((sums.n * sums.v2 - sums.v**2) * (sums.n * sums.p2 - sums.p**2))**0.5
     puts "Statistics for calibration: %i observations, %1.3f hPa mean, %1.3f hPa standard deviation, %1.5f correlation." % [ v_p.length, Pressure.new(mean, altitude).to_sea_level, Pressure.new(sd, altitude).to_sea_level, r ]
     
+    Instrument.stop_observations!
+    
     updated_observations = observations.with_value.after(after).chronological.all
     voltages = updated_observations.map do |observation|
       output_voltage_from_pressure(Pressure.new(observation.value, 0.0))
@@ -199,15 +211,17 @@ class Barometer < Instrument
     print "Enter y to update calibration for the barometer: "
     if gets =~ /^y/i
       self.last_calibrated_at = updated_observations.last.time
-      save
-      updated_observations.each(&:save)
+      ActiveRecord::Base.transaction do
+        save
+        updated_observations.each(&:save)
+      end
       puts "New sensor calibration saved."
       # # TODO: code here to update sensitivity and offset for next recalibration?
       # puts "New sensor calibration saved. (You may wish to recalibrate trimmers.)"
     else
-      puts "Calibration cancelled."
       reload
-      nil
+      Instrument.restart_observations!
+      puts "Calibration cancelled."
     end
   end
     

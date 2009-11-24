@@ -93,5 +93,16 @@ class Instrument < ActiveRecord::Base
     rescue TerminateException
       Rails.logger.info "#{Time.zone.now} Stopping observations."
     end
+    
+    [ "stop_observations", "restart_observations" ].each do |method|
+      define_method "#{method}!" do
+        if APP_CONFIG.has_key?(method)
+          `#{APP_CONFIG[method]}`
+          $?.success? ?
+            Rails.logger.info("#{Time.zone.now} Weather daemon: attempt to #{method.humanize.downcase} succeeded.") :
+            Rails.logger.error("#{Time.zone.now} Weather daemon: attempt to #{method.humanize.downcase} failed.")
+        end
+      end
+    end
   end
 end
