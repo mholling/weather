@@ -43,7 +43,7 @@ class WebScraper < Instrument
       nearest_observation ? [ nearest_observation, scraped_observation ] : nil
     end.compact
   end
-  
+
   protected
   
   def config_ok

@@ -31,7 +31,7 @@ class Barometer < Instrument
     pressure_from_output_voltage(normalised_vad).to_sea_level.to_f
   end
   
-  %w{altitude oversample sensitivity offset reference gain gradient intercept last_calibrated_at}.each do |attribute|
+  %w{altitude oversample sensitivity offset reference gain gradient intercept last_adjusted_at last_calibrated_at}.each do |attribute|
     define_method "#{attribute}=" do |value|
       self.config[attribute] = value
     end
@@ -51,8 +51,10 @@ class Barometer < Instrument
     self.sensitivity ||= 0.0046
     self.offset ||= 0.204
     
-    print "Enter altitude in metres: "
-    self.altitude = gets.to_f
+    unless options[:use_instrument]
+      print "Enter altitude in metres: "
+      self.altitude = gets.to_f
+    end
     print "Enter minimum pressure in hPa: "
     minimum_pressure = Pressure.new(gets.to_f, 0.0)
     print "Enter maximum pressure in hPa: "
@@ -66,6 +68,7 @@ class Barometer < Instrument
     target_reference = (target_gain * minimum_sensor_voltage - 1.5)/(target_gain - 1.0)
     
     current_pressure = if options[:use_instrument]
+      puts "Reading current pressure..."
       pressure_from_output_voltage(normalised_vad)
     else
       print "Enter the current MSL pressure in hPa: "
@@ -81,16 +84,17 @@ class Barometer < Instrument
       self.gradient = 1.0 / (sensitivity * gain)
       self.intercept = 150.0 + (reference * (gain - 1.0) / gain - offset) / sensitivity
       
-      self.last_calibrated_at = Time.zone.now
-      save
+      self.last_adjusted_at = Time.zone.now
+      self.last_calibrated_at = nil
       puts "Setup complete. #{calibration_information}"
+      save
     rescue IRB::Abort
       reload
       puts "Aborted setup, weather daemon currently stopped!"
     end
   end
   
-  def setup_again!
+  def adjust!
     setup!(:use_instrument => true)
   end
   
@@ -144,7 +148,7 @@ class Barometer < Instrument
     (pressure.to_altitude(altitude).to_f - intercept)/gradient
   end
   
-  def pressure_from_output_voltage(voltage)
+  def pressure_from_output_voltage(voltage, intercept = self.intercept, gradient = self.gradient)
     Pressure.new(intercept + gradient * voltage, altitude)
   end
 
@@ -156,7 +160,7 @@ class Barometer < Instrument
     values.sum / values.length
   end
   
-  def calibration_information
+  def calibration_information(intercept = self.intercept, gradient = self.gradient, offset = self.offset)
     strings = []
     strings << "Lowest Pressure: %.1f hPa" % Pressure.new(intercept + gradient * 1.5, altitude).to_sea_level
     strings << "Highest Pressure: %.1f hPa" % Pressure.new(intercept + gradient * 4.9, altitude).to_sea_level
@@ -165,10 +169,10 @@ class Barometer < Instrument
     strings.join("; ")
   end
 
-  def calibrate_to!(web_scraper)
-    # TODO: add code to use updated_at for when #setup! was last called?
-    after = last_calibrated_at || observations.with_value.chronological.first.time - 1.second
-    puts "Calibrating for observations back to #{after.localtime}."
+  def calibrate_to!(web_scraper, options = {})
+    after = [ options[:after] || last_calibrated_at, last_adjusted_at ].compact.max
+    after ||= observations.with_value.chronological.first.time - 1.second
+    puts "Calibrating using observations back to #{after.localtime}."
     
     v_p = web_scraper.matched_observations_for(self, :margin => 5.minutes, :after => after).map do |observation_pair|
       observation_pair.map { |observation| Pressure.new(observation.value, 0.0) }
@@ -189,40 +193,32 @@ class Barometer < Instrument
     mean = sums.p / sums.n
     sd = (sums.p2 / sums.n - mean**2)**0.5
     r = (sums.n * sums.vp - sums.v * sums.p)/((sums.n * sums.v2 - sums.v**2) * (sums.n * sums.p2 - sums.p**2))**0.5
-    puts "Statistics for calibration: %i observations, %1.3f hPa mean, %1.3f hPa standard deviation, %1.5f correlation." % [ v_p.length, Pressure.new(mean, altitude).to_sea_level, Pressure.new(sd, altitude).to_sea_level, r ]
+    puts "Statistics for scraped calibration data: %i observations, %1.3f hPa mean, %1.3f hPa standard deviation, %1.5f correlation." % [ v_p.length, Pressure.new(mean, altitude).to_sea_level, Pressure.new(sd, altitude).to_sea_level, r ]
     
-    Instrument.stop_observations!
-    
-    updated_observations = observations.with_value.after(after).chronological.all
-    voltages = updated_observations.map do |observation|
-      output_voltage_from_pressure(Pressure.new(observation.value, 0.0))
-    end
+    new_gradient  = (sums.n * sums.vp - sums.v * sums.p )/(sums.n * sums.v2 - sums.v * sums.v)
+    new_intercept = (sums.p * sums.v2 - sums.v * sums.vp)/(sums.n * sums.v2 - sums.v * sums.v)
+    new_gain = 1.0 / (sensitivity * new_gradient)
+    new_offset = reference * (new_gain - 1.0) / new_gain - (new_intercept - 150.0) * sensitivity  
     
     puts "(Before) #{calibration_information}"
-    
-    self.gradient  = (sums.n * sums.vp - sums.v * sums.p )/(sums.n * sums.v2 - sums.v * sums.v)
-    self.intercept = (sums.p * sums.v2 - sums.v * sums.vp)/(sums.n * sums.v2 - sums.v * sums.v)
-
-    self.gain = 1.0 / (sensitivity * gradient)
-    self.offset = reference * (gain - 1.0) / gain - (intercept - 150.0) * sensitivity
-
-    puts " (After) #{calibration_information}"
-
-    updated_observations.zip(voltages).each do |observation, voltage|
-      observation.value = pressure_from_output_voltage(voltage).to_sea_level.to_f
-    end
-
-    print "Enter y to update calibration for the barometer: "
+    puts " (After) #{calibration_information(new_intercept, new_gradient, new_offset)}"
+      
+    print "Enter y to save new calibration for the barometer, or return to cancel: "
     if gets =~ /^y/i
-      self.last_calibrated_at = updated_observations.last.time
+      print "Enter y to recalculate past observations back to #{after.localtime}, or return to skip: "
+      recalculate = gets =~ /^y/i
+      Instrument.stop_observations!
       ActiveRecord::Base.transaction do
+        observations.with_value.after(after).find_each do |observation|
+          voltage = output_voltage_from_pressure(Pressure.new(observation.value, 0.0))
+          observation.update_attribute(:value, pressure_from_output_voltage(voltage, new_intercept, new_gradient).to_sea_level.to_f)
+        end if recalculate
+        self.gradient, self.intercept, self.gain, self.offset = new_gradient, new_intercept, new_gain, new_offset
+        self.last_calibrated_at = Time.zone.now
         save
-        updated_observations.each(&:save)
       end
-      puts "New sensor calibration saved. (You may wish to re-adjust gain if the offset voltage changed.)"
+      puts "Calibration complete. (You may wish to re-adjust gain if the offset voltage changed.)"
     else
-      reload
-      Instrument.restart_observations!
       puts "Calibration cancelled."
     end
   end
