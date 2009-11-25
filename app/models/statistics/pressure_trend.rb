@@ -26,7 +26,7 @@ class PressureTrend < Statistic
       else "steady"
     end
     trend = [ direction, speed ].compact.join(" ")
-    pressure = instrument.observations.with_value.with_meteorological_date(interval).last.value
+    pressure = instrument.observations.with_value.chronological.last.value
     OpenStruct.new(:pressure => pressure, :trend => trend)
   rescue ZeroDivisionError
     nil
