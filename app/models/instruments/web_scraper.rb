@@ -24,7 +24,7 @@ class WebScraper < Instrument
     rescue ArgumentError, TypeError
       return nil
     end
-    return nil unless time && observations.chronological.last && observations.chronological.last.time < time
+    return nil unless time && observations.chronological.with_value.last && observations.chronological.with_value.last.time < time
     
     OpenStruct.new(:to_f => to_f, :to_time => time)
   rescue Scraper::Reader::HTTPError, Scraper::Reader::HTMLParseError => e

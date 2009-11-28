@@ -192,11 +192,15 @@ class Barometer < Instrument
     
     mean = sums.p / sums.n
     sd = (sums.p2 / sums.n - mean**2)**0.5
-    r = (sums.n * sums.vp - sums.v * sums.p)/((sums.n * sums.v2 - sums.v**2) * (sums.n * sums.p2 - sums.p**2))**0.5
-    puts "Statistics for scraped calibration data: %i observations, %1.3f hPa mean, %1.3f hPa standard deviation, %1.5f correlation." % [ v_p.length, Pressure.new(mean, altitude).to_sea_level, Pressure.new(sd, altitude).to_sea_level, r ]
+    puts "Scraped data: %i observations, %1.1f hPa mean, %1.3f hPa standard deviation." % [ v_p.length, Pressure.new(mean, altitude).to_sea_level, Pressure.new(sd, altitude).to_sea_level ]
     
     new_gradient  = (sums.n * sums.vp - sums.v * sums.p )/(sums.n * sums.v2 - sums.v * sums.v)
     new_intercept = (sums.p * sums.v2 - sums.v * sums.vp)/(sums.n * sums.v2 - sums.v * sums.v)
+
+    r = (sums.n * sums.vp - sums.v * sums.p)/((sums.n * sums.v2 - sums.v**2) * (sums.n * sums.p2 - sums.p**2))**0.5
+    mse = (new_gradient * new_gradient * sums.v2 + sums.n * new_intercept * new_intercept + sums.p2 + 2 * new_gradient * new_intercept * sums.v - 2 * new_intercept * sums.p - 2 * new_gradient * sums.vp) / sums.n
+    puts "Regression results: %1.5f correlation, %1.3f hPa RMS error." % [ r, mse**0.5 ]
+
     new_gain = 1.0 / (sensitivity * new_gradient)
     new_offset = reference * (new_gain - 1.0) / new_gain - (new_intercept - 150.0) * sensitivity  
     
