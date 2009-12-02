@@ -168,6 +168,13 @@ class Barometer < Instrument
     strings << "Offset Voltage: %.4f V" % offset
     strings.join("; ")
   end
+  
+  def compared_to(web_scraper)
+    after = [ last_calibrated_at, last_adjusted_at ].compact.max
+    web_scraper.matched_observations_for(self, :margin => 5.minutes, :after => after).map do |observation_pair|
+      observation_pair.map { |observation| Pressure.new(observation.value, 0.0).to_f }
+    end
+  end
 
   def calibrate_to!(web_scraper, options = {})
     after = [ options[:after] || last_calibrated_at, last_adjusted_at ].compact.max
